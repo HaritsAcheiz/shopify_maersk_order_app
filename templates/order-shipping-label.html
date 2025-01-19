@@ -1,280 +1,157 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Shipping Labels</title>
-    <link rel="stylesheet" href="https://unpkg.com/@shopify/polaris/build/esm/styles.css">
-    <style>
-        .order-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        .order-table th, .order-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        .order-table th {
-            background-color: #f4f6f8;
-            font-weight: 600;
-        }
-        .order-table tbody tr:hover {
-            background-color: #f9fafb;
-        }
-        .loading {
-            text-align: center;
-            padding: 20px;
-        }
-        .pagination {
-            display: flex;
-            justify-content: flex-end;
-            padding: 20px;
-            gap: 10px;
-        }
-        .pagination button {
-            padding: 8px 16px;
-            border: 1px solid #ddd;
-            background: white;
-            cursor: pointer;
-        }
-        .pagination button:disabled {
-            background: #f4f6f8;
-            cursor: not-allowed;
-        }
-        .error {
-            color: #bf0711;
-            padding: 16px;
-            background: #fbeae5;
-            border-radius: 4px;
-            margin: 16px 0;
-        }
-        .action-button {
-            background-color: #008060;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .action-button:hover {
-            background-color: #006e52;
-        }
-        .action-button:disabled {
-            background-color: #f4f6f8;
-            cursor: not-allowed;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-        .modal-content {
-            background-color: white;
-            margin: 15% auto;
-            padding: 20px;
-            width: 80%;
-            max-width: 600px;
-            border-radius: 4px;
-        }
-        .close {
-            float: right;
-            cursor: pointer;
-            font-size: 20px;
-        }
-    </style>
-</head>
-<body>
-    <div class="Polaris-Page">
-        <div class="Polaris-Page-Header">
-            <h1 class="Polaris-DisplayText--sizeLarge">Order Shipping Labels</h1>
-        </div>
-        <div class="Polaris-Card">
-            <div class="Polaris-Card__Section">
-                <div id="errorContainer" style="display: none;" class="error"></div>
-                <div id="orderTableContainer">
-                    <table class="order-table">
-                        <thead>
-                            <tr>
-                                <th>Order #</th>
-                                <th>Date</th>
-                                <th>Customer</th>
-                                <th>Total</th>
-                                <th>Payment Status</th>
-                                <th>Fulfillment Status</th>
-                                <th>Shipping Address</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="orderTableBody">
-                            <!-- Orders will be inserted here -->
-                        </tbody>
-                    </table>
-                    <div class="pagination">
-                        <button id="prevPage" disabled>Previous</button>
-                        <button id="nextPage">Next</button>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Order Shipping Labels</title>
+        <!-- Shopify App Initialization -->
+        <meta name="shopify-app-init" content="shopOrigin=magiccars.myshopify.com">
+
+        <!-- Polaris Styles -->
+        <link rel="stylesheet" href="https://unpkg.com/@shopify/polaris@latest/build/esm/styles.css">
+
+        <!-- App Bridge -->
+        <!-- <script src="https://unpkg.com/@shopify/app-bridge@latest"></script>
+        <script src="https://unpkg.com/@shopify/app-bridge-utils@latest"></script>
+        <script src="https://unpkg.com/@shopify/app-bridge"></script> -->
+        <meta name="shopify-api-key" content="bab5bf6827a5f563959611dcfe25a3ba" />
+        <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
+
+        <style>
+            /* Page Styles */
+            .order-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+            }
+            .order-table th, .order-table td {
+                padding: 12px;
+                text-align: left;
+                border-bottom: 1px solid #ddd;
+            }
+            .order-table th {
+                background-color: #f4f6f8;
+                font-weight: 600;
+            }
+            .order-table tbody tr:hover {
+                background-color: #f9fafb;
+            }
+            .error {
+                color: #bf0711;
+                padding: 16px;
+                background: #fbeae5;
+                border-radius: 4px;
+                margin: 16px 0;
+            }
+            .action-button {
+                background-color: #008060;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+            .action-button:hover {
+                background-color: #006e52;
+            }
+            .modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+            }
+            .modal-content {
+                background-color: white;
+                margin: 15% auto;
+                padding: 20px;
+                width: 80%;
+                max-width: 600px;
+                border-radius: 4px;
+            }
+            .close {
+                float: right;
+                cursor: pointer;
+                font-size: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="Polaris-Page">
+            <div class="Polaris-Page-Header">
+                <h1 class="Polaris-DisplayText--sizeLarge">Order Shipping Labels</h1>
+            </div>
+            <div class="Polaris-Card">
+                <div class="Polaris-Card__Section">
+                    <div id="errorContainer" style="display: none;" class="error"></div>
+                    <div id="orderTableContainer">
+                        <table class="order-table">
+                            <thead>
+                                <tr>
+                                    <th>Order #</th>
+                                    <!-- <th>Date</th> -->
+                                    <!-- <th>Customer</th> -->
+                                    <th>Total Price</th>
+                                    <!-- <th>Payment Status</th> -->
+                                    <!-- <th>Fulfillment Status</th> -->
+                                    <!-- <th>Shipping Address</th> -->
+                                    <!-- <th>Actions</th> -->
+                                </tr>
+                            </thead>
+                            <tbody id="orderTableBody">
+                                {% for order in orders %}
+                                  <tr>
+                                    <td>{{ order.name }}</td>
+                                    <td>{{ order.total_price }}</td>
+                                  </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Shipping Label Modal -->
-    <div id="shippingLabelModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Generate Shipping Label</h2>
-            <div id="labelDetails">
-                <!-- Shipping label details will be shown here -->
+        <!-- Modal
+        <div id="shippingLabelModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Generate Shipping Label</h2>
+                <div id="labelDetails">
+                    <!-- Shipping label details will be shown here -->
+                </div>
+                <button id="generateLabel" class="action-button">Generate Label</button>
             </div>
-            <button id="generateLabel" class="action-button">Generate Label</button>
         </div>
-    </div>
 
-    <script>
-        let cursor = null;
-        let hasNextPage = true;
-        const modal = document.getElementById('shippingLabelModal');
-        const closeBtn = document.getElementsByClassName('close')[0];
-
-        async function fetchOrders(after = null) {
-            try {
-                const url = `/api/orders${after ? `?cursor=${after}` : ''}`;
-                const response = await fetch(url);
-                const data = await response.json();
-
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-
-                return data.data.orders;
-            } catch (error) {
-                showError(`Error fetching orders: ${error.message}`);
-                return null;
-            }
-        }
-
-        function showError(message) {
-            const errorContainer = document.getElementById('errorContainer');
-            errorContainer.textContent = message;
-            errorContainer.style.display = 'block';
-        }
-
-        function hideError() {
-            document.getElementById('errorContainer').style.display = 'none';
-        }
-
-        async function generateShippingLabel(orderId) {
-            try {
-                const response = await fetch(`/api/shipping-label/${orderId}`, {
-                    method: 'POST'
+        <button id="open-picker">Open resource picker</button>
+        <script>
+            document
+                .getElementById('open-picker')
+                .addEventListener('click', async () => {
+                    const selected = await shopify.resourcePicker({type: 'product'});
+                    console.log(selected);
                 });
-                const data = await response.json();
+        </script>
 
-                if (data.error) {
-                    throw new Error(data.error);
-                }
+        <script>
+          document.addEventListener('DOMContentLoaded', () => {
+            const AppBridge = window['app-bridge'];
+            const createApp = AppBridge.default;
+            const shopOrigin = new URLSearchParams(window.location.search).get('shop') || 'magiccars.myshopify.com';
 
-                // Handle successful label generation
-                window.open(data.labelUrl, '_blank');
-            } catch (error) {
-                showError(`Error generating shipping label: ${error.message}`);
-            }
-        }
-
-        function showLabelModal(orderData) {
-            const labelDetails = document.getElementById('labelDetails');
-            labelDetails.innerHTML = `
-                <p><strong>Order:</strong> ${orderData.name}</p>
-                <p><strong>Customer:</strong> ${orderData.customer ? `${orderData.customer.firstName} ${orderData.customer.lastName}` : 'N/A'}</p>
-                <p><strong>Shipping Address:</strong> ${orderData.shippingAddress ?
-                    `${orderData.shippingAddress.address1}, ${orderData.shippingAddress.city},
-                     ${orderData.shippingAddress.country} ${orderData.shippingAddress.zip}` : 'N/A'}</p>
-            `;
-
-            const generateBtn = document.getElementById('generateLabel');
-            generateBtn.onclick = () => generateShippingLabel(orderData.id);
-
-            modal.style.display = 'block';
-        }
-
-        function renderOrders(orders) {
-            hideError();
-            const tableBody = document.getElementById('orderTableBody');
-            tableBody.innerHTML = '';
-
-            orders.edges.forEach(({ node }) => {
-                const row = document.createElement('tr');
-                const shippingAddress = node.shippingAddress ?
-                    `${node.shippingAddress.address1}, ${node.shippingAddress.city}, ${node.shippingAddress.country} ${node.shippingAddress.zip}` :
-                    'N/A';
-
-                row.innerHTML = `
-                    <td>${node.name}</td>
-                    <td>${new Date(node.createdAt).toLocaleDateString()}</td>
-                    <td>${node.customer ? `${node.customer.firstName} ${node.customer.lastName}` : 'N/A'}</td>
-                    <td>${node.displayFinalPrice}</td>
-                    <td>${node.displayFinancialStatus}</td>
-                    <td>${node.displayFulfillmentStatus}</td>
-                    <td>${shippingAddress}</td>
-                    <td>
-                        <button class="action-button" onclick='showLabelModal(${JSON.stringify(node)})'>
-                            Generate Label
-                        </button>
-                    </td>
-                `;
-                tableBody.appendChild(row);
+            const app = createApp({
+                apiKey: 'bab5bf6827a5f563959611dcfe25a3ba',
+                // shopOrigin: new URLSearchParams(window.location.search).get('shop'),
+                shoporigin: shopOrigin
+                forceRedirect: true
             });
+          });
 
-            document.getElementById('prevPage').disabled = !cursor;
-            document.getElementById('nextPage').disabled = !orders.pageInfo.hasNextPage;
-
-            hasNextPage = orders.pageInfo.hasNextPage;
-            cursor = orders.pageInfo.endCursor;
-        }
-
-        // Close modal when clicking the X
-        closeBtn.onclick = function() {
-            modal.style.display = 'none';
-        }
-
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                modal.style.display = 'none';
-            }
-        }
-
-        async function initializeTable() {
-            const orders = await fetchOrders();
-            if (orders) {
-                renderOrders(orders);
-            }
-        }
-
-        document.getElementById('nextPage').addEventListener('click', async () => {
-            if (hasNextPage) {
-                const orders = await fetchOrders(cursor);
-                if (orders) {
-                    renderOrders(orders);
-                }
-            }
-        });
-
-        document.getElementById('prevPage').addEventListener('click', async () => {
-            const orders = await fetchOrders(null);
-            if (orders) {
-                renderOrders(orders);
-                cursor = null;
-            }
-        });
-
-        initializeTable();
-    </script>
-</body>
-</html>
+          const TitleBar = AppBridge.actions.TitleBar;
+          TitleBar.create(app, { title: 'Order Shipping Labels' });
+        </script>
+    </body>
+    </html>

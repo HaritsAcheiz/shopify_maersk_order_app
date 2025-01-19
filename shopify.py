@@ -68,6 +68,7 @@ class ShopifyApi():
 
 	# Create
 	def create_session(self):
+		print("Creating session...")
 		headers = {
 			'X-Shopify-Access-Token': self.access_token,
 			'Content-Type': 'application/json'
@@ -320,7 +321,7 @@ class ShopifyApi():
 if __name__ == '__main__':
 	api = ShopifyApi(store_name=os.getenv('MC_STORE_NAME'), access_token=os.getenv('MC_ACCESS_TOKEN'), version='2024-10')
 	api.create_session()
-	# response = api.products()
+	response = api.products()
 	# response = api.create_carrier_service(
 	# 	name='Maersk',
 	# 	callbackUrl='https://gasscooters.pythonanywhere.com/rates',
@@ -330,6 +331,6 @@ if __name__ == '__main__':
 	# response = api.get_webhooks()
 	# response = api.create_webhook(topic='CARTS_CREATE', callbackUrl='https://0a98-120-188-37-151.ngrok-free.app/webhook', _format='JSON')
 	# response = api.delete_webhook('')
-	response = api.orders()
+	# response = api.orders()
 
 	print(response)

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Shipping Labels</title>
+
+    <!-- Polaris Styles -->
+    <link rel="stylesheet" href="https://unpkg.com/@shopify/polaris@latest/build/esm/styles.css">
+
+    <!-- App Bridge -->
+    <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
+
+    <style>
+        /* Page Styles */
+        .order-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .order-table th, .order-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .order-table th {
+            background-color: #f4f6f8;
+            font-weight: 600;
+        }
+        .order-table tbody tr:hover {
+            background-color: #f9fafb;
+        }
+        .error {
+            color: #bf0711;
+            padding: 16px;
+            background: #fbeae5;
+            border-radius: 4px;
+            margin: 16px 0;
+        }
+        .action-button {
+            background-color: #008060;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .action-button:hover {
+            background-color: #006e52;
+        }
+    </style>
+</head>
+<body>
+    <div class="Polaris-Page">
+        <div class="Polaris-Page-Header">
+            <h1 class="Polaris-DisplayText--sizeLarge">Order Shipping Labels</h1>
+        </div>
+        <div class="Polaris-Card">
+            <div class="Polaris-Card__Section">
+                <div id="errorContainer" style="display: none;" class="error"></div>
+                <div id="orderTableContainer">
+                    <table class="order-table">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th>Total Price</th>
+                                <th>Payment Status</th>
+                                <th>Fulfillment Status</th>
+                                <th>Shipping Address</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orderTableBody">
+                            {% for order in orders %}
+                                <tr>
+                                    <td>{{ order.no }}</td>
+                                    <td>{{ order.date }}</td>
+                                    <td>{{ order.customer }}</td>
+                                    <td>{{ order.totalPrice }}</td>
+                                    <td>{{ order.paymentStatus }}</td>
+                                    <td>{{ order.fulfillmentStatus }}</td>
+                                    <td>{{ order.shippingAddress }}</td>
+                                    <td>{{ order.actions }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const AppBridge = window['app-bridge'];
+            const createApp = AppBridge.default;
+
+            // Retrieve shopOrigin from query parameters
+            const shopOrigin = new URLSearchParams(window.location.search).get('shop');
+            if (!shopOrigin) {
+                console.error('Shop parameter is missing!');
+                // Optionally redirect to an error page
+                return;
+            }
+
+            // Initialize Shopify App Bridge
+            const app = createApp({
+                apiKey: 'bab5bf6827a5f563959611dcfe25a3ba',
+                shopOrigin: shopOrigin
+            });
+
+            // Initialize Title Bar
+            const TitleBar = AppBridge.actions.TitleBar;
+            TitleBar.create(app, { title: 'Order Shipping Labels' });
+        });
+    </script>
+</body>
+</html>
