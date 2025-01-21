@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details</title>
+
+    <!-- Polaris Styles -->
+    <link rel="stylesheet" href="https://unpkg.com/@shopify/polaris@latest/build/esm/styles.css">
+
+    <style>
+        body {
+            margin: 20px;
+        }
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .order-section {
+            margin-bottom: 20px;
+        }
+        .order-section-title {
+            font-size: 1.25rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .order-section-content {
+            background: #f4f6f8;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .button {
+            background-color: #008060;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #006e52;
+        }
+    </style>
+</head>
+<body>
+    <div class="Polaris-Page">
+        <div class="order-header">
+            <div>
+                <h1>Order #{{ order_data.id }}</h1>
+                <p>{{ order_data.date }}</p>
+            </div>
+            <div class="action-buttons">
+                <button class="button">Print</button>
+            </div>
+        </div>
+
+        <div class="order-section">
+            <h2 class="order-section-title">Order Status</h2>
+            <div class="order-section-content">
+                <p>Status: <strong>{{ order_data.status }}</strong></p>
+            </div>
+        </div>
+
+        <div class="order-section">
+            <h2 class="order-section-title">Items</h2>
+            <div class="order-section-content">
+                <ul>
+                    {% if order_data._items %}
+                        {% for item in order_data._items %}
+                            <li>{{ item.title }} - {{ item.quantity }} × {{ item.price }}</li>
+                        {% endfor %}
+                    {% else %}
+                        <li>No items found</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="order-section">
+            <h2 class="order-section-title">Payment</h2>
+            <div class="order-section-content">
+                <p>Subtotal: {{ order_data.subtotal }}</p>
+                <p>Tax: {{ order_data.tax }}</p>
+                <p>Total: {{ order_data.total }}</p>
+                <p>Paid: {{ order_data.paid }}</p>
+            </div>
+        </div>
+
+        <div class="order-section">
+            <h2 class="order-section-title">Customer</h2>
+            <div class="order-section-content">
+                <p>Name: {{ order_data.customer.name }}</p>
+                <p>Email: {{ order_data.customer.email }}</p>
+                <p>Phone: {{ order_data.customer.phone }}</p>
+            </div>
+        </div>
+
+        <div class="order-section">
+            <h2 class="order-section-title">Shipping Address</h2>
+            <div class="order-section-content">
+                <p>{{ order_data.shipping_address }}</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const AppBridge = window['app-bridge'];
+            if (AppBridge) {
+                const actions = AppBridge.actions;
+                const app = createApp({
+                    apiKey: 'bc76934b5aa84195b7ce01ef8a0d1acf',
+                    shopOrigin: new URLSearchParams(window.location.search).get('shop'),
+                });
+
+                // Update the title bar for order details
+                const TitleBar = actions.TitleBar;
+                TitleBar.update(app, { title: 'Order Details' });
+            }
+        });
+    </script>
+</body>
+</html>

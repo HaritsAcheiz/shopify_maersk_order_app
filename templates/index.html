@@ -82,7 +82,10 @@
                                     <td>{{ order.paymentStatus }}</td>
                                     <td>{{ order.fulfillmentStatus }}</td>
                                     <td>{{ order.shippingAddress }}</td>
-                                    <td>{{ order.actions }}</td>
+                                    <!-- <td>{{ order.actions }}</td> -->
+                                    <td>
+                                        <button class="action-button" onclick="viewOrderDetails('{{ order.no }}')">View Details</button>
+                                    </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -107,7 +110,7 @@
 
             // Initialize Shopify App Bridge
             const app = createApp({
-                apiKey: 'bab5bf6827a5f563959611dcfe25a3ba',
+                apiKey: 'bc76934b5aa84195b7ce01ef8a0d1acf',
                 shopOrigin: shopOrigin
             });
 
@@ -115,6 +118,12 @@
             const TitleBar = AppBridge.actions.TitleBar;
             TitleBar.create(app, { title: 'Order Shipping Labels' });
         });
+
+        // Define the viewOrderDetails function outside the event listener
+        function viewOrderDetails(orderId) {
+            // Redirect to the order details page with the orderId as a query parameter
+            window.location.href = `/order-details?order_id=${orderId}`;
+        }
     </script>
 </body>
 </html>

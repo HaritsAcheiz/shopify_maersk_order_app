@@ -14,10 +14,11 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
-SHOPIFY_CLIENT_ID = os.getenv('API_KEY')
-SHOPIFY_CLIENT_SECRET = os.getenv('API_SECRET')
-SHOPIFY_SCOPE = "read_products,write_products,read_all_orders,read_orders,write_orders"
-REDIRECT_URI = os.getenv('REDIRECT_URI')
+SHOPIFY_CLIENT_ID = os.getenv('D_API_KEY')
+SHOPIFY_CLIENT_SECRET = os.getenv('D_API_SECRET')
+SHOPIFY_SCOPE = "read_orders,read_products"
+REDIRECT_URI = os.getenv('D_REDIRECT_URI')
+api = None
 
 
 @app.after_request
@@ -85,6 +86,8 @@ def callback():
 
 @app.route('/index')
 def index():
+    global api
+
     shop = session.get('shop')
     access_token = session.get('access_token')
 
@@ -102,27 +105,109 @@ def index():
     # Fetch orders from Shopify
     api = ShopifyApi(store_name=shop.split('.')[0], access_token=access_token, version='2025-01')
     api.create_session()
-    orders_data = api.orders()
-    print(orders_data)
+    # orders_data = api.orders()
+    orders = [
+        {
+            "no": "001",
+            "date": "2025-01-20",
+            "customer": "John Doe",
+            "totalPrice": "$150.00",
+            "paymentStatus": "Paid",
+            "fulfillmentStatus": "Shipped",
+            "shippingAddress": "123 Main St, New York, NY",
+            "actions": "Print"
+        },
+        {
+            "no": "002",
+            "date": "2025-01-21",
+            "customer": "Jane Smith",
+            "totalPrice": "$230.00",
+            "paymentStatus": "Pending",
+            "fulfillmentStatus": "Processing",
+            "shippingAddress": "456 Oak St, Los Angeles, CA",
+            "actions": "Print"
+        },
+        {
+            "no": "003",
+            "date": "2025-01-22",
+            "customer": "Michael Johnson",
+            "totalPrice": "$320.00",
+            "paymentStatus": "Failed",
+            "fulfillmentStatus": "Unfulfilled",
+            "shippingAddress": "789 Pine St, Chicago, IL",
+            "actions": "Print"
+        }
+    ]
 
-    orders = []
-    for edge in orders_data['data']['orders']['edges']:
-        node = edge['node']
-        orders.append({
-            "no": node['name'],
-            "date": node['createdAt'],
-            "customer": f"{node['customer']['firstName']} {node['customer']['lastName']}" if node['customer'] else "Guest",
-            "totalPrice": f"${node['totalPriceSet']['shopMoney']['amount']}",
-            "paymentStatus": node['displayFinancialStatus'],
-            "fulfillmentStatus": node['displayFulfillmentStatus'],
-            "shippingAddress": (
-                f"{node['shippingAddress']['address1']}, {node['shippingAddress']['city']}, {node['shippingAddress']['country']}, {node['shippingAddress']['zip']}"
-                if node['shippingAddress'] else "No Address"
-            ),
-            "actions": "View"
-        })
+    # orders = []
+    # for edge in orders_data['data']['orders']['edges']:
+    #     node = edge['node']
+    #     orders.append({
+    #         "no": node['name'],
+    #         "date": node['createdAt'],
+    #         "customer": f"{node['customer']['firstName']} {node['customer']['lastName']}" if node['customer'] else "Guest",
+    #         "totalPrice": f"${node['totalPriceSet']['shopMoney']['amount']}",
+    #         "paymentStatus": node['displayFinancialStatus'],
+    #         "fulfillmentStatus": node['displayFulfillmentStatus'],
+    #         "shippingAddress": (
+    #             f"{node['shippingAddress']['address1']}, {node['shippingAddress']['city']}, {node['shippingAddress']['country']}, {node['shippingAddress']['zip']}"
+    #             if node['shippingAddress'] else "No Address"
+    #         ),
+    #         "actions": "View"
+    #     })
 
     return render_template('index.html', shop=shop, orders=orders, )
+
+
+@app.route('/order-details')
+def order_details():
+    order_id = request.args.get('order_id')
+    if not order_id:
+        return jsonify({'error': 'Order ID is required'}), 400
+
+    # response = api.order(order_id)
+    # if response.status_code != 200:
+    #     return jsonify({'error': 'Failed to fetch order details'}), response.status_code
+
+    # json_data = response.json()
+    # order_data = json_data['data']['orders']['edges']['node']
+    # order = {
+    #     "no": order_data['name'],
+    #     "date": order_data['createdAt'],
+    #     "customer": f"{order_data['customer']['firstName']} {order_data['customer']['lastName']}" if order_data['customer'] else "Guest",
+    #     "totalPrice": f"${order_data['totalPriceSet']['shopMoney']['amount']}",
+    #     "paymentStatus": order_data['displayFinancialStatus'],
+    #     "fulfillmentStatus": order_data['displayFulfillmentStatus'],
+    #     "shippingAddress": (
+    #         f"{order_data['shippingAddress']['address1']}, {order_data['shippingAddress']['city']}, {order_data['shippingAddress']['country']}, {order_data['shippingAddress']['zip']}"
+    #         if order_data['shippingAddress'] else "No Address"
+    #     ),
+    #     "actions": "View"
+    # }
+
+    order_data = {
+        "id": order_id,
+        "date": "2025-01-22",
+        "status": "Fulfilled",
+        "_items": [
+            {"title": "Product A", "quantity": 2, "price": "$20.00"},
+            {"title": "Product B", "quantity": 1, "price": "$15.00"},
+            {"title": "Product C", "quantity": 3, "price": "$10.00"}
+        ],
+        "subtotal": "$85.00",
+        "tax": "$8.50",
+        "total": "$93.50",
+        "paid": "$93.50",
+        "customer": {
+            "name": "John Doe",
+            "email": "john.doe@example.com",
+            "phone": "123-456-7890"
+        },
+        "shipping_address": "123 Shopify Lane, Commerce City, CO, 80022"
+    }
+
+    # Render the order details page or return JSON data
+    return render_template('order-details.html', order_data=order_data)
 
 
 @app.route('/products')
