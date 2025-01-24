@@ -109,38 +109,6 @@ def index():
     api = ShopifyApi(store_name=shop.split('.')[0], access_token=access_token, version='2025-01')
     api.create_session()
     orders_data = api.orders()
-    # orders = [
-    #     {
-    #         "no": "001",
-    #         "date": "2025-01-20",
-    #         "customer": "John Doe",
-    #         "totalPrice": "$150.00",
-    #         "paymentStatus": "Paid",
-    #         "fulfillmentStatus": "Shipped",
-    #         "shippingAddress": "123 Main St, New York, NY",
-    #         "actions": "Print"
-    #     },
-    #     {
-    #         "no": "002",
-    #         "date": "2025-01-21",
-    #         "customer": "Jane Smith",
-    #         "totalPrice": "$230.00",
-    #         "paymentStatus": "Pending",
-    #         "fulfillmentStatus": "Processing",
-    #         "shippingAddress": "456 Oak St, Los Angeles, CA",
-    #         "actions": "Print"
-    #     },
-    #     {
-    #         "no": "003",
-    #         "date": "2025-01-22",
-    #         "customer": "Michael Johnson",
-    #         "totalPrice": "$320.00",
-    #         "paymentStatus": "Failed",
-    #         "fulfillmentStatus": "Unfulfilled",
-    #         "shippingAddress": "789 Pine St, Chicago, IL",
-    #         "actions": "Print"
-    #     }
-    # ]
 
     orders = []
     for edge in orders_data['data']['orders']['edges']:
@@ -160,6 +128,62 @@ def index():
         })
 
     return render_template('index.html', shop=shop, orders=orders, )
+
+
+@app.route('/search_order')
+def search_orders():
+    search_term = request.args.get('search')
+    shop = session.get('shop')
+    access_token = session.get('access_token')
+
+    if not shop or not access_token:
+        # Handle unauthorized access as before
+        return "Unauthorized", 401
+
+    api = ShopifyApi(store_name=shop.split('.')[0], access_token=access_token, version='2025-01')
+    api.create_session()
+
+    orders_data = api.orders()  # Fetch all orders initially
+    orders = []
+    if search_term:
+        # Filter orders based on search term (case-insensitive)
+        for edge in orders_data['data']['orders']['edges']:
+            node = edge['node']
+            if search_term.lower() in node['name'].lower():
+                order = {
+                    "no": node['name'],
+                    "date": node['createdAt'],
+                    "customer": f"{node['customer']['firstName']} {node['customer']['lastName']}" if node['customer'] else "Guest",
+                    "totalPrice": f"${node['totalPriceSet']['shopMoney']['amount']}",
+                    "paymentStatus": node['displayFinancialStatus'],
+                    "fulfillmentStatus": node['displayFulfillmentStatus'],
+                    "shippingAddress": (
+                        f"{node['shippingAddress']['address1']}, {node['shippingAddress']['city']}, {node['shippingAddress']['country']}, {node['shippingAddress']['zip']}"
+                        if node['shippingAddress'] else "No Address"
+                    ),
+                    "actions": "View"
+                }
+                orders.append(order)
+    else:
+        # Return all orders if no search term is provided
+        for edge in orders_data['data']['orders']['edges']:
+            node = edge['node']
+            order = {
+                "no": node['name'],
+                "date": node['createdAt'],
+                "customer": f"{node['customer']['firstName']} {node['customer']['lastName']}" if node['customer'] else "Guest",
+                "totalPrice": f"${node['totalPriceSet']['shopMoney']['amount']}",
+                "paymentStatus": node['displayFinancialStatus'],
+                "fulfillmentStatus": node['displayFulfillmentStatus'],
+                "shippingAddress": (
+                    f"{node['shippingAddress']['address1']}, {node['shippingAddress']['city']}, {node['shippingAddress']['country']}, {node['shippingAddress']['zip']}"
+                    if node['shippingAddress'] else "No Address"
+                ),
+                "actions": "View"
+            }
+            orders.append(order)
+
+    return jsonify({'orders': orders})
 
 
 @app.route('/order-details')
