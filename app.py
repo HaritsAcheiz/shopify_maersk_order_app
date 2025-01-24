@@ -1,9 +1,12 @@
-from flask import Flask, request, redirect, session, render_template, jsonify
+from flask import Flask, request, redirect, session, render_template, jsonify, send_from_directory
 import os
 import logging
 import requests
 from dotenv import load_dotenv
 from shopify import ShopifyApi
+from barcode import Code128
+from barcode.writer import SVGWriter
+import io
 import json
 
 load_dotenv()
@@ -14,10 +17,10 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
-SHOPIFY_CLIENT_ID = os.getenv('D_API_KEY')
-SHOPIFY_CLIENT_SECRET = os.getenv('D_API_SECRET')
-SHOPIFY_SCOPE = "read_orders,read_products"
-REDIRECT_URI = os.getenv('D_REDIRECT_URI')
+SHOPIFY_CLIENT_ID = os.getenv('P_API_KEY')
+SHOPIFY_CLIENT_SECRET = os.getenv('P_API_SECRET')
+SHOPIFY_SCOPE = "read_orders,read_products,read_customers"
+REDIRECT_URI = os.getenv('P_REDIRECT_URI')
 api = None
 
 
@@ -210,6 +213,25 @@ def order_details():
     return render_template('order-details.html', order_data=order_data)
 
 
+@app.route('/get-label/<order_id>')
+def get_label(order_id):
+    # In practice, you would fetch the label data from your database
+    ean = Code128(order_id, writer=SVGWriter())
+    barcode_buffer = io.BytesIO()
+    ean.write(barcode_buffer)
+    barcode_svg = barcode_buffer.getvalue().decode('utf-8')
+
+    label_data = {
+        'order_number': order_id,
+        'date_created': '12-07-2022',
+        'tracking_number': 'TYPQW050000026',
+        'weight': '50g',
+        'carrier': 'PARCELPLUS',
+        'barcode_svg': barcode_svg
+    }
+    return jsonify(label_data)
+
+
 @app.route('/products')
 def fetch_products():
     """
@@ -254,6 +276,11 @@ def favicon():
     Handles favicon requests.
     """
     return '', 204
+
+
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    return send_from_directory('static', filename)
 
 
 if __name__ == "__main__":

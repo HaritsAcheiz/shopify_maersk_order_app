@@ -5,56 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Shipping Labels</title>
 
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="/static/styles.css">
+
     <!-- Polaris Styles -->
     <link rel="stylesheet" href="https://unpkg.com/@shopify/polaris@latest/build/esm/styles.css">
+
+    <!-- Font Awesome Styles -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
     <!-- App Bridge -->
     <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
 
-    <style>
-        /* Page Styles */
-        .order-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        .order-table th, .order-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        .order-table th {
-            background-color: #f4f6f8;
-            font-weight: 600;
-        }
-        .order-table tbody tr:hover {
-            background-color: #f9fafb;
-        }
-        .error {
-            color: #bf0711;
-            padding: 16px;
-            background: #fbeae5;
-            border-radius: 4px;
-            margin: 16px 0;
-        }
-        .action-button {
-            background-color: #008060;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .action-button:hover {
-            background-color: #006e52;
-        }
-    </style>
 </head>
 <body>
     <div class="Polaris-Page">
         <div class="Polaris-Page-Header">
             <h1 class="Polaris-DisplayText--sizeLarge">Order Shipping Labels</h1>
         </div>
+
+        <!-- Search Bar and Fetch Button -->
+        <div class="search-container">
+            <input
+                type="text"
+                id="searchBox"
+                placeholder="Search Order ID"
+                oninput="filterOrders()"
+            />
+            <button id="fetchButton" onclick="fetchOrderData()" class="magnify-icon">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+
         <div class="Polaris-Card">
             <div class="Polaris-Card__Section">
                 <div id="errorContainer" style="display: none;" class="error"></div>
@@ -95,35 +77,6 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const AppBridge = window['app-bridge'];
-            const createApp = AppBridge.default;
-
-            // Retrieve shopOrigin from query parameters
-            const shopOrigin = new URLSearchParams(window.location.search).get('shop');
-            if (!shopOrigin) {
-                console.error('Shop parameter is missing!');
-                // Optionally redirect to an error page
-                return;
-            }
-
-            // Initialize Shopify App Bridge
-            const app = createApp({
-                apiKey: 'bc76934b5aa84195b7ce01ef8a0d1acf',
-                shopOrigin: shopOrigin
-            });
-
-            // Initialize Title Bar
-            const TitleBar = AppBridge.actions.TitleBar;
-            TitleBar.create(app, { title: 'Order Shipping Labels' });
-        });
-
-        // Define the viewOrderDetails function outside the event listener
-        function viewOrderDetails(orderId) {
-            // Redirect to the order details page with the orderId as a query parameter
-            window.location.href = `/order-details?order_id=${orderId}`;
-        }
-    </script>
+    <script src="{{ url_for('static', filename='index.js') }}"></script>
 </body>
 </html>
