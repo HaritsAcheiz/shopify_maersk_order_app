@@ -24,6 +24,12 @@ REDIRECT_URI = os.getenv('P_REDIRECT_URI')
 api = None
 
 
+def get_order_id(order_name):
+    global api
+    response = api.orders(order_name)
+    
+    return response['data']['orders']['edges'][0]['node']['id']
+
 @app.after_request
 def add_headers(response):
     response.headers['X-Frame-Options'] = 'ALLOWALL'
@@ -43,10 +49,17 @@ def install():
         return "Missing shop parameter", 400
     install_url = f"https://{shop}/admin/oauth/authorize"
 
-    print(f"{install_url}?client_id={SHOPIFY_CLIENT_ID}&scope={SHOPIFY_SCOPE}&redirect_uri={REDIRECT_URI}&embedded_app=true")
     return redirect(
         f"{install_url}?client_id={SHOPIFY_CLIENT_ID}&scope={SHOPIFY_SCOPE}&redirect_uri={REDIRECT_URI}&embedded_app=true"
     )
+
+@app.route('/api/init', methods=['GET'])
+def init_app():
+    shop_origin = request.args.get('shop')
+    if not shop_origin:
+        return jsonify({'error': 'Shop parameter is missing!'}), 400
+
+    return jsonify({'apiKey': SHOPIFY_CLIENT_ID, 'shopOrigin': shop_origin})
 
 
 @app.route('/callback')
@@ -131,59 +144,51 @@ def index():
 
 
 @app.route('/search_order')
-def search_orders():
-    search_term = request.args.get('search')
-    shop = session.get('shop')
-    access_token = session.get('access_token')
+def search_order():
+    global api
 
-    if not shop or not access_token:
-        # Handle unauthorized access as before
-        return "Unauthorized", 401
+    token_file_path = "shopify_tokens.json"
+    if os.path.exists(token_file_path):
+        with open(token_file_path, "r") as token_file:
+            data = json.load(token_file)
+            for key, value in data.items():
+                shop = key
+                access_token = value
 
-    api = ShopifyApi(store_name=shop.split('.')[0], access_token=access_token, version='2025-01')
-    api.create_session()
+    order_name = request.args.get('orderid')
 
-    orders_data = api.orders()  # Fetch all orders initially
-    orders = []
-    if search_term:
-        # Filter orders based on search term (case-insensitive)
-        for edge in orders_data['data']['orders']['edges']:
-            node = edge['node']
-            if search_term.lower() in node['name'].lower():
-                order = {
-                    "no": node['name'],
-                    "date": node['createdAt'],
-                    "customer": f"{node['customer']['firstName']} {node['customer']['lastName']}" if node['customer'] else "Guest",
-                    "totalPrice": f"${node['totalPriceSet']['shopMoney']['amount']}",
-                    "paymentStatus": node['displayFinancialStatus'],
-                    "fulfillmentStatus": node['displayFulfillmentStatus'],
-                    "shippingAddress": (
-                        f"{node['shippingAddress']['address1']}, {node['shippingAddress']['city']}, {node['shippingAddress']['country']}, {node['shippingAddress']['zip']}"
-                        if node['shippingAddress'] else "No Address"
-                    ),
-                    "actions": "View"
-                }
-                orders.append(order)
-    else:
-        # Return all orders if no search term is provided
-        for edge in orders_data['data']['orders']['edges']:
-            node = edge['node']
-            order = {
-                "no": node['name'],
-                "date": node['createdAt'],
-                "customer": f"{node['customer']['firstName']} {node['customer']['lastName']}" if node['customer'] else "Guest",
-                "totalPrice": f"${node['totalPriceSet']['shopMoney']['amount']}",
-                "paymentStatus": node['displayFinancialStatus'],
-                "fulfillmentStatus": node['displayFulfillmentStatus'],
-                "shippingAddress": (
-                    f"{node['shippingAddress']['address1']}, {node['shippingAddress']['city']}, {node['shippingAddress']['country']}, {node['shippingAddress']['zip']}"
-                    if node['shippingAddress'] else "No Address"
-                ),
-                "actions": "View"
-            }
-            orders.append(order)
+    if not order_name:
+        return jsonify({"error": "Order ID is required"}), 400
 
-    return jsonify({'orders': orders})
+    try:
+        order_id = get_order_id(order_name)
+        response = api.order(order_id, mode='search')  # Assuming you have a method to get a specific order
+        
+        order_data = response['data']['order']
+        if not order_data:
+            return jsonify({"error": "Order not found"}), 404
+
+        # Prepare the order data for rendering
+        order = {
+            "no": order_data['name'],
+            "date": order_data['createdAt'],
+            "customer": f"{order_data['customer']['firstName']} {order_data['customer']['lastName']}" if order_data['customer'] else "Guest",
+            "totalPrice": f"${order_data['totalPriceSet']['shopMoney']['amount']}",
+            "paymentStatus": order_data['displayFinancialStatus'],
+            "fulfillmentStatus": order_data['displayFulfillmentStatus'],
+            "shippingAddress": (
+                f"{order_data['shippingAddress']['address1']}, {order_data['shippingAddress']['city']}, {order_data['shippingAddress']['country']}, {order_data['shippingAddress']['zip']}"
+                if order_data['shippingAddress'] else "No Address"
+            ),
+            "actions": "View"
+        }
+
+        # Render the index.html with the specific order data
+        return render_template('index.html', shop=shop, orders=[order])  # Pass the order as a list
+
+    except Exception as e:
+        # print(order_data)
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/order-details')
@@ -192,12 +197,13 @@ def order_details():
     if not order_id:
         return jsonify({'error': 'Order ID is required'}), 400
 
-    response = api.order(order_id)
+    response = api.order(order_id, mode='details')
     if response.status_code != 200:
         return jsonify({'error': 'Failed to fetch order details'}), response.status_code
 
     json_data = response.json()
     order_data = json_data['data']['orders']['edges']['node']
+    print(order_data)
     order = {
         "no": order_data['name'],
         "date": order_data['createdAt'],

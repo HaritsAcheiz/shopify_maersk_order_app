@@ -51,6 +51,7 @@ class ShopifyApi():
 
 				# Check for API-specific errors
 				if 'errors' in json_response:
+					print(json_response)
 					raise ValueError(f"Shopify API Error: {json_response['errors']}")
 
 				return json_response
@@ -203,17 +204,195 @@ class ShopifyApi():
 
 		return response
 
-	def orders(self, cursor=None):
+	def orders(self, cursor=None, order_name=None):
 		print("Fetching Orders...")
-		query = """
-			query getOrders($cursor: String) {
-				orders(first: 10, after: $cursor, sortKey: CREATED_AT, reverse: true) {
-					pageInfo {
-						hasNextPage
-						endCursor
+		variables = {}
+		if cursor and order_name:
+			return None
+		elif cursor and not order_name:
+			query = """
+				query getOrders($cursor: String) {
+					orders(first: 10, after: $cursor, sortKey: CREATED_AT, reverse: true) {
+						pageInfo {
+							hasNextPage
+							endCursor
+						}
+						edges {
+							node {
+								id
+								name
+								createdAt
+								totalPriceSet{
+									shopMoney{
+										amount
+									}
+								}
+								customer {
+									firstName
+									lastName
+								}
+								displayFinancialStatus
+								displayFulfillmentStatus
+								shippingAddress {
+									address1
+									city
+									country
+									zip
+								}
+								lineItems(first: 5) {
+									edges {
+										node {
+											title
+											quantity
+										}
+									}
+								}
+							}
+						}
 					}
-					edges {
-						node {
+				}
+			"""
+			variables["after"] = cursor
+		
+		elif not cursor and order_name:
+			query = """
+				query getOrders($query: String) {
+					orders(first: 10, sortKey: CREATED_AT, reverse: true, query: $query) {
+						pageInfo {
+							hasNextPage
+							endCursor
+						}
+						edges {
+							node {
+								id
+								name
+								createdAt
+								totalPriceSet{
+									shopMoney{
+										amount
+									}
+								}
+								customer {
+									firstName
+									lastName
+								}
+								displayFinancialStatus
+								displayFulfillmentStatus
+								shippingAddress {
+									address1
+									city
+									country
+									zip
+								}
+								lineItems(first: 5) {
+									edges {
+										node {
+											title
+											quantity
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			"""
+			variables["query"] = f"name:{order_name}"
+		
+		elif not cursor and not order_name:
+			query = """
+				query {
+					orders(first: 10, sortKey: CREATED_AT, reverse: true) {
+						pageInfo {
+							hasNextPage
+							endCursor
+						}
+						edges {
+							node {
+								id
+								name
+								createdAt
+								totalPriceSet{
+									shopMoney{
+										amount
+									}
+								}
+								customer {
+									firstName
+									lastName
+								}
+								displayFinancialStatus
+								displayFulfillmentStatus
+								shippingAddress {
+									address1
+									city
+									country
+									zip
+								}
+								lineItems(first: 5) {
+									edges {
+										node {
+											title
+											quantity
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			"""
+			variable = None
+
+		response = self.send_request(query, variables=variables)
+
+		return response
+
+	def order(self, order_id, mode):
+		print(f'Fetching Order {order_id}...')
+		try:
+			if mode == 'details':
+				query = """
+					query getOrder($id: ID!) {
+						order(id: $id) {
+							id
+							name
+							shippingAddress {
+								address1
+								address2
+								city
+								province
+								provinceCode
+								zip
+								country
+								countryCode
+								phone
+							}
+							lineItems(first: 20) {
+								edges {
+									node {
+										title
+										quantity
+									}
+								}
+							}
+							customer {
+								firstName
+								lastName
+								email
+								phone
+							}
+						}
+					}
+				"""
+				variables = {"id": order_id}
+
+				return self.send_request(query=query, variables=variables)
+
+			elif mode == 'search':
+				query = """
+					query getOrder($id: ID!) {
+						order(id: $id) {
 							id
 							name
 							createdAt
@@ -244,53 +423,12 @@ class ShopifyApi():
 							}
 						}
 					}
-				}
-			}
-		"""
-		variables = {"cursor": cursor} if cursor else None
-		response = self.send_request(query, variables=variables)
+				"""
+				variables = {"id": order_id}
 
-		return response
-
-	def order(self, order_id):
-		query = """
-			query getOrder($id: ID!) {
-				order(id: $id) {
-					id
-					name
-					shippingAddress {
-						address1
-						address2
-						city
-						province
-						provinceCode
-						zip
-						country
-						countryCode
-						phone
-					}
-					lineItems(first: 20) {
-						edges {
-							node {
-								title
-								quantity
-								weight
-								weightUnit
-							}
-						}
-					}
-					customer {
-						firstName
-						lastName
-						email
-						phone
-					}
-				}
-			}
-		"""
-		variables = {"id": order_id}
-
-		return self.send_request(query=query, variables=variables)
+				return self.send_request(query=query, variables=variables)
+		except Exception as e:
+			return None
 
 	# Update
 
