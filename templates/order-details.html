@@ -16,11 +16,11 @@
     <div class="Polaris-Page">
         <div class="order-header">
             <div>
-                <h1>Order #{{ order_data.id }}</h1>
+                <h1>Order #{{ order_data.no }}</h1>
                 <p>{{ order_data.date }}</p>
             </div>
             <div class="print-buttons">
-                <button onclick="showLabel('{{ order_data.id }}')" class="print-button">
+                <button onclick="showLabel('{{ order_data.no }}')" class="print-button">
                     Print Label
                 </button>
             </div>
@@ -29,7 +29,7 @@
         <div class="order-section">
             <h2 class="order-section-title">Order Status</h2>
             <div class="order-section-content">
-                <p>Status: <strong>{{ order_data.status }}</strong></p>
+                <p>Status: <strong>{{ order_data.fulfillmentStatus }}</strong></p>
             </div>
         </div>
 
@@ -70,7 +70,7 @@
         <div class="order-section">
             <h2 class="order-section-title">Shipping Address</h2>
             <div class="order-section-content">
-                <p>{{ order_data.shipping_address }}</p>
+                <p>{{ order_data.shippingAddress }}</p>
             </div>
         </div>
 

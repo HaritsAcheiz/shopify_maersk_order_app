@@ -193,51 +193,40 @@ def search_order():
 
 @app.route('/order-details')
 def order_details():
-    order_id = request.args.get('order_id')
-    if not order_id:
+    order_name = request.args.get('ordername')
+    if not order_name:
         return jsonify({'error': 'Order ID is required'}), 400
 
-    response = api.order(order_id, mode='details')
-    if response.status_code != 200:
-        return jsonify({'error': 'Failed to fetch order details'}), response.status_code
+    order_id = get_order_id(order_name)
+    json_data = api.order(order_id, mode='details')
 
-    json_data = response.json()
-    order_data = json_data['data']['orders']['edges']['node']
+    order_data = json_data['data']['order']
     print(order_data)
+    _items = []
+    products = order_data['lineItems']['edges']
+    for product in products:
+        _items.append(product['node'])
+
     order = {
         "no": order_data['name'],
         "date": order_data['createdAt'],
-        "customer": f"{order_data['customer']['firstName']} {order_data['customer']['lastName']}" if order_data['customer'] else "Guest",
-        "totalPrice": f"${order_data['totalPriceSet']['shopMoney']['amount']}",
-        "paymentStatus": order_data['displayFinancialStatus'],
         "fulfillmentStatus": order_data['displayFulfillmentStatus'],
+        "_items": _items,
+        "subtotal": "$85.00",
+        "tax": "$8.50",
+        "total": f"${order_data['totalPriceSet']['shopMoney']['amount']}",
+        "paid": "$93.50",
+        "customer": {
+            "name": f"{order_data['customer']['firstName']} {order_data['customer']['lastName']}" if order_data['customer'] else "Guest",
+            "email": order_data['customer']['email'],
+            "phone": order_data['customer']['phone']
+        },
         "shippingAddress": (
             f"{order_data['shippingAddress']['address1']}, {order_data['shippingAddress']['city']}, {order_data['shippingAddress']['country']}, {order_data['shippingAddress']['zip']}"
             if order_data['shippingAddress'] else "No Address"
         ),
-        "actions": "View"
+        "paymentStatus": order_data['displayFinancialStatus']
     }
-
-    # order_data = {
-    #     "id": order_id,
-    #     "date": "2025-01-22",
-    #     "status": "Fulfilled",
-    #     "_items": [
-    #         {"title": "Product A", "quantity": 2, "price": "$20.00"},
-    #         {"title": "Product B", "quantity": 1, "price": "$15.00"},
-    #         {"title": "Product C", "quantity": 3, "price": "$10.00"}
-    #     ],
-    #     "subtotal": "$85.00",
-    #     "tax": "$8.50",
-    #     "total": "$93.50",
-    #     "paid": "$93.50",
-    #     "customer": {
-    #         "name": "John Doe",
-    #         "email": "john.doe@example.com",
-    #         "phone": "123-456-7890"
-    #     },
-    #     "shipping_address": "123 Shopify Lane, Commerce City, CO, 80022"
-    # }
 
     # Render the order details page or return JSON data
     return render_template('order-details.html', order_data=order)
@@ -260,28 +249,6 @@ def get_label(order_id):
         'barcode_svg': barcode_svg
     }
     return jsonify(label_data)
-
-
-@app.route('/products')
-def fetch_products():
-    """
-    Fetches the products from the Shopify store.
-    """
-    shop = request.args.get('shop')
-    if not shop:
-        return "Missing shop parameter", 400
-
-    # Retrieve the access token from your database
-    token = "stored_access_token_for_this_shop"  # Replace with your database retrieval logic
-    url = f"https://{shop}/admin/api/2025-01/products.json"
-    headers = {
-        "X-Shopify-Access-Token": token,
-        "Content-Type": "application/json",  # Add Content-Type header
-    }
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        return jsonify(response.json())
-    return "Failed to fetch products", response.status_code
 
 
 @app.errorhandler(404)

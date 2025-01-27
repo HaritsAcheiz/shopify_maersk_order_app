@@ -81,3 +81,8 @@ document.addEventListener('DOMContentLoaded', () => {
         errorContainer.textContent = '';
     }
 });
+
+// Define the viewOrderDetails function outside the event listener
+    function viewOrderDetails(orderName) {
+      window.location.href = `/order-details?ordername=${encodeURIComponent(orderName)}`;
+    }

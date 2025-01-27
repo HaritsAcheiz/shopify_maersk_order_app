@@ -357,6 +357,7 @@ class ShopifyApi():
 						order(id: $id) {
 							id
 							name
+							createdAt
 							shippingAddress {
 								address1
 								address2
@@ -367,6 +368,13 @@ class ShopifyApi():
 								country
 								countryCode
 								phone
+							}
+							displayFinancialStatus
+							displayFulfillmentStatus
+							totalPriceSet{
+								shopMoney{
+									amount
+								}
 							}
 							lineItems(first: 20) {
 								edges {
