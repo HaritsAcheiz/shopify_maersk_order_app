@@ -434,53 +434,9 @@ class ShopifyApi():
 				"""
 				variables = {"id": order_id}
 
-<<<<<<< HEAD
 				return self.send_request(query=query, variables=variables)
 		except Exception as e:
 			return None
-=======
-		return response
-
-	def order(self, order_id):
-		query = """
-			query getOrder($id: ID!) {
-				order(id: $id) {
-					id
-					name
-					shippingAddress {
-						address1
-						address2
-						city
-						province
-						provinceCode
-						zip
-						country
-						countryCodeV2
-						phone
-					}
-					lineItems(first: 20) {
-						edges {
-							node {
-								title
-								quantity
-								weight
-								weightUnit
-							}
-						}
-					}
-					customer {
-						firstName
-						lastName
-						email
-						phone
-					}
-				}
-			}
-		"""
-		variables = {"id": order_id}
-
-		return self.send_request(query=query, variables=variables)
->>>>>>> 84adde8 (conflict)
 
 	# Update
 

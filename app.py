@@ -30,6 +30,7 @@ def get_order_id(order_name):
     
     return response['data']['orders']['edges'][0]['node']['id']
 
+
 @app.after_request
 def add_headers(response):
     response.headers['X-Frame-Options'] = 'ALLOWALL'
@@ -52,6 +53,7 @@ def install():
     return redirect(
         f"{install_url}?client_id={SHOPIFY_CLIENT_ID}&scope={SHOPIFY_SCOPE}&redirect_uri={REDIRECT_URI}&embedded_app=true"
     )
+
 
 @app.route('/api/init', methods=['GET'])
 def init_app():
