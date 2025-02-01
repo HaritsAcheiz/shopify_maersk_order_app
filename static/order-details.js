@@ -150,3 +150,35 @@ function printLabel() {
     `);
     printWindow.document.close();
 }
+
+function fetchShippingOptions() {
+    let zipcode = document.getElementById("originZipcode").value || "91710"; // Default ZIP code
+
+    fetch(`/get-shipping-options?zipcode=${zipcode}`)
+        .then(response => response.json())
+        .then(data => {
+            let shippingSection = document.getElementById("shippingOptionsSection");
+            let shippingTable = document.getElementById("shippingOptionsTable");
+            shippingTable.innerHTML = ""; // Clear existing data
+
+            if (data.length > 0) {
+                shippingSection.style.display = "block"; // Show the section
+
+                data.forEach(service => {
+                    let row = `<tr>
+                        <td>${service.DisplayService}</td>
+                        <td>$${service.TotalQuote.toFixed(2)}</td>
+                        <td>${service.DeliveryDate.split('T')[0]}</td>
+                        <td><button onclick="showLabel('${service.LinkForShipping}')" class="shipnow-button">Ship Now</button></td>
+                    </tr>`;
+                    shippingTable.innerHTML += row;
+                });
+            } else {
+                shippingSection.style.display = "none"; // Hide if no results
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching shipping options:", error);
+            document.getElementById("shippingOptionsSection").style.display = "none";
+        });
+}

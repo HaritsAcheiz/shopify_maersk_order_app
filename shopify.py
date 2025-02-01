@@ -371,7 +371,42 @@ class ShopifyApi():
 							}
 							displayFinancialStatus
 							displayFulfillmentStatus
-							totalPriceSet{
+							currentTotalAdditionalFeesSet{
+								shopMoney{
+									amount
+								}
+							}
+							currentTotalDiscountsSet{
+								shopMoney{
+									amount
+								}
+							}
+							currentShippingPriceSet{
+								shopMoney{
+									amount
+								}
+							}
+							currentTotalDutiesSet{
+								shopMoney{
+									amount
+								}
+							}
+							currentTotalTaxSet{
+								shopMoney{
+									amount
+								}
+							}
+							currentSubtotalPriceSet{
+								shopMoney{
+									amount
+								}
+							}
+							currentTotalPriceSet{
+								shopMoney{
+									amount
+								}
+							}
+							totalReceivedSet{
 								shopMoney{
 									amount
 								}

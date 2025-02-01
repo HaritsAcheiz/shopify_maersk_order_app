@@ -26,7 +26,7 @@ api = None
 
 def get_order_id(order_name):
     global api
-    response = api.orders(order_name)
+    response = api.orders(order_name=order_name)
     
     return response['data']['orders']['edges'][0]['node']['id']
 
@@ -204,24 +204,36 @@ def order_details():
 
     order_data = json_data['data']['order']
     print(order_data)
+
     _items = []
     products = order_data['lineItems']['edges']
     for product in products:
         _items.append(product['node'])
+
+    # tax_lines = []
+    # if len(order_data['taxLines']) > 0:
+    #     taxes = order_data['taxLines']['edges']
+    #     for tax in taxes:
+    #         tax_lines.append(tax['node'])
 
     order = {
         "no": order_data['name'],
         "date": order_data['createdAt'],
         "fulfillmentStatus": order_data['displayFulfillmentStatus'],
         "_items": _items,
-        "subtotal": "$85.00",
-        "tax": "$8.50",
-        "total": f"${order_data['totalPriceSet']['shopMoney']['amount']}",
-        "paid": "$93.50",
+        "subtotal": order_data['currentSubtotalPriceSet']['shopMoney']['amount'],
+        "additional": order_data['currentTotalAdditionalFeesSet']['shopMoney']['amount'] if order_data['currentTotalAdditionalFeesSet'] else "0.0",
+        # "tax": tax_lines,
+        "tax": order_data['currentTotalTaxSet']['shopMoney']['amount'],
+        "shipping": order_data['currentShippingPriceSet']['shopMoney']['amount'],
+        "duties": order_data['currentTotalDutiesSet']['shopMoney']['amount'] if order_data['currentTotalDutiesSet'] else "0.0",
+        "discount": order_data['currentTotalDiscountsSet']['shopMoney']['amount'],
+        "total": order_data['currentTotalPriceSet']['shopMoney']['amount'],
+        "paid": order_data['totalReceivedSet']['shopMoney']['amount'],
         "customer": {
             "name": f"{order_data['customer']['firstName']} {order_data['customer']['lastName']}" if order_data['customer'] else "Guest",
-            "email": order_data['customer']['email'],
-            "phone": order_data['customer']['phone']
+            "email": order_data['customer']['email'] if order_data['customer'] else "None",
+            "phone": order_data['customer']['phone'] if order_data['customer'] else "None"
         },
         "shippingAddress": (
             f"{order_data['shippingAddress']['address1']}, {order_data['shippingAddress']['city']}, {order_data['shippingAddress']['country']}, {order_data['shippingAddress']['zip']}"
@@ -232,6 +244,20 @@ def order_details():
 
     # Render the order details page or return JSON data
     return render_template('order-details.html', order_data=order)
+
+
+@app.route('/get-shipping-options')
+def get_shipping_options():
+    zipcode = request.args.get('zipcode', '90001')  # Default ZIP code if not provided
+
+    # Load existing shipping services
+    with open('shipping_services.json', 'r') as file:
+        shipping_services = json.load(file)
+
+    # You can add filtering logic based on `zipcode` if needed.
+    available_services = shipping_services["dsQuote"]["Quote"]
+
+    return jsonify(available_services)
 
 
 @app.route('/get-label/<order_id>')

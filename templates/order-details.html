@@ -16,13 +16,10 @@
     <div class="Polaris-Page">
         <div class="order-header">
             <div>
-                <h1>Order #{{ order_data.no }}</h1>
-                <p>{{ order_data.date }}</p>
-            </div>
-            <div class="print-buttons">
-                <button onclick="showLabel('{{ order_data.no }}')" class="print-button">
-                    Print Label
-                </button>
+                <h1 class="order-section-title">Order #{{ order_data.no }}</h1>
+                <div class="order-section-content">
+                    <p>{{ order_data.date }}</p>
+                </div>
             </div>
         </div>
 
@@ -48,13 +45,72 @@
             </div>
         </div>
 
-        <div class="order-section">
+        <!-- <div class="order-section">
             <h2 class="order-section-title">Payment</h2>
             <div class="order-section-content">
                 <p>Subtotal: {{ order_data.subtotal }}</p>
                 <p>Tax: {{ order_data.tax }}</p>
                 <p>Total: {{ order_data.total }}</p>
                 <p>Paid: {{ order_data.paid }}</p>
+            </div>
+        </div> -->
+
+        <div class="order-section">
+            <h2 class="order-section-title">
+                <span class="status-icon">✓</span>
+                Paid
+            </h2>
+            <div class="order-section-content">
+                <div class="payment-details">
+                    <div class="payment-row">
+                        <div class="payment-label">Subtotal</div>
+                        <div class="payment-info">{{ order_data._items|length }} item</div>
+                        <div class="payment-amount">${{ order_data.subtotal }}</div>
+                    </div>
+
+                    <div class="payment-row total-row">
+                        <div class="payment-label">Additional</div>
+                        <div class="payment-amount">${{ order_data.additional }}</div>
+                    </div>
+
+                    <div class="payment-row total-row">
+                        <div class="payment-label">Tax</div>
+                        <div class="payment-amount">${{ order_data.tax }}</div>
+                    </div>
+
+                    {% for tax in order_data.taxes %}
+                    <div class="payment-row tax-row">
+                        <div class="payment-label">{{ tax.title }}</div>
+                        <div class="payment-info">{{ tax.rate }}%</div>
+                        <div class="payment-amount">${{ tax.amount }}</div>
+                    </div>
+                    {% endfor %}
+
+                    <div class="payment-row total-row">
+                        <div class="payment-label">Shipping</div>
+                        <div class="payment-amount">${{ order_data.shipping }}</div>
+                    </div>
+
+                    <div class="payment-row total-row">
+                        <div class="payment-label">Duties</div>
+                        <div class="payment-amount">${{ order_data.duties }}</div>
+                    </div>
+
+                    <div class="payment-row total-row">
+                        <div class="payment-label">Discount</div>
+                        <div class="payment-amount">${{ order_data.discount }}</div>
+                    </div>
+
+                    <div class="payment-row total-row">
+                        <div class="payment-label">Total</div>
+                        <div class="payment-amount">${{ order_data.total }}</div>
+                    </div>
+
+                    <div class="payment-row paid-row">
+                        <div class="payment-label">Paid by customer</div>
+                        <div class="payment-amount">${{ order_data.paid }}</div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -74,6 +130,33 @@
             </div>
         </div>
 
+        <div class="order-section">
+            <h2 class="order-section-title">Enter Origin ZIP Code</h2>
+            <div class="order-section-content">
+                <input type="text" id="originZipcode" placeholder="Enter ZIP Code" value="{{ default_zipcode }}">
+                <button onclick="fetchShippingOptions()" class="shipnow-button">Get Shipping Options</button>
+            </div>
+        </div>
+
+        <div class="order-section" id="shippingOptionsSection" style="display: none;">
+            <h2 class="order-section-title">Shipping Options</h2>
+            <div class="order-section-content">
+                <table class="shipping-options">
+                    <thead>
+                        <tr>
+                            <th>Service</th>
+                            <th>Total Cost</th>
+                            <th>Delivery Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="shippingOptionsTable">
+                        <!-- Data will be inserted dynamically -->
+                    </tbody>
+                </table>
+            </div>
+</div>
+
         <!-- Modal Popup -->
         <div id="labelModal" class="modal">
             <div class="modal-content">
@@ -89,7 +172,7 @@
                     <p>Weight: <span id="weight"></span></p>
                     <p>TYPNumber: <span id="trackingNumber"></span></p>
                 </div>
-                <button onclick="printLabel()" class="print-button">Print</button>
+                <button onclick="printLabel()" class="shipnow-button">Print & Shipping</button>
             </div>
         </div>
 

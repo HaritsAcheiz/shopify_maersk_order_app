@@ -108,7 +108,7 @@ body {
     border-radius: 8px;
 }
 
-.print-buttons {
+.shipnow-buttons {
     display: flex;
     gap: 10px;
 }
@@ -157,7 +157,7 @@ body {
     color: #000;
 }
 
-.print-button {
+.shipnow-button {
     background-color: #008060;
     color: white;
     padding: 8px 16px;
@@ -167,6 +167,72 @@ body {
     font-size: 14px;
 }
 
-.print-button:hover {
+.shipnow-button:hover {
     background-color: #006e52;
+}
+
+.shipping-options {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.shipping-options th,
+.shipping-options td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.shipping-options th {
+    background-color: #f5f5f5;
+    font-weight: 600;
+}
+
+.payment-details {
+    width: 100%;
+}
+
+.payment-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 16px;
+    padding: 8px 0;
+    align-items: center;
+}
+
+.tax-row {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.payment-label {
+    font-weight: 400;
+}
+
+.payment-info {
+    color: #666;
+    text-align: right;
+}
+
+.payment-amount {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.total-row {
+    border-top: 1px solid #ddd;
+    margin-top: 8px;
+    padding-top: 16px;
+    font-weight: 500;
+}
+
+.paid-row {
+    color: #666;
+    font-size: 0.9em;
+    margin-top: 8px;
+}
+
+.status-icon {
+    color: #008060;
+    margin-right: 8px;
 }
