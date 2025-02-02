@@ -8,14 +8,16 @@ import requests
 import xml.etree.ElementTree as ET
 import os
 import json
+import logging
+from datetime import datetime
 
+# logging.basicConfig(level=logging.DEBUG)
 load_dotenv()
 
 
 @dataclass
 class MaerskApi():
 	base_api_url: str = 'https://pilotws.pilotdelivers.com'
-	wsdl_url: str = 'https://pilotws.pilotdelivers.com/copilotforms/wsCoPilotSG.asmx?WSDL'
 	session: requests.Session = field(default_factory=requests.Session)
 
 	def get_new_quote(self):
@@ -51,6 +53,64 @@ class MaerskApi():
 		except Exception as e:
 			print(f"Error occurred: {e}")
 			return None
+
+	def get_new_shipment(self):
+		# Disable SSL warnings if you're setting verify=False
+		requests.packages.urllib3.disable_warnings()
+
+		# Create a session
+		session = requests.Session()
+		session.headers.update({
+			"Content-Type": "application/soap+xml; charset=utf-8"
+		})
+		session.verify = False  # Disable SSL verification if needed
+
+		# Set up Zeep client
+		wsdl_url = "https://ws3.pilotdelivers.com/webservice/wsshipments/Shipment.asmx?WSDL"
+		settings = zeep.Settings(strict=False)
+		transport = Transport(session=session)
+		client = zeep.Client(wsdl=wsdl_url, transport=transport, settings=settings)
+
+		# Call GetNewShipment
+		try:
+			response = client.service.GetNewShipment()
+			# Check the full response
+			print(response)
+
+			# Extract the actual data from _value_1 if it exists
+			if hasattr(response, 'GetNewShipmentResult'):
+				shipment_result = response.GetNewShipmentResult
+				if hasattr(shipment_result, '_value_1'):
+					print(shipment_result._value_1)
+				else:
+					print("No _value_1 in GetNewShipmentResult")
+			else:
+				print("No GetNewShipmentResult in response")
+
+		except Exception as e:
+			print("Error:", e)
+
+	def get_new_shipment_rest(self):
+		url = "https://ws3.pilotdelivers.com/webservice/wsshipments/Shipment.asmx"
+		headers = {
+			"Content-Type": "application/soap+xml; charset=utf-8",
+			"SOAPAction": "http://tempuri.org/GetNewShipment"
+		}
+
+		# SOAP envelope as per documentation
+		soap_envelope = """<?xml version="1.0" encoding="utf-8"?>
+			<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+			xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+			xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
+				<soap12:Body>
+					<GetNewShipment xmlns="http://tempuri.org/" />
+				</soap12:Body>
+			</soap12:Envelope>
+		"""
+
+		response = requests.post(url, data=soap_envelope, headers=headers, verify=False)
+
+		return response
 
 	def find_origin_by_zip_rest(self, sZip):
 		endpoint = urljoin(self.base_api_url, '/copilotforms/wsCoPilotSG.asmx/FindOriginByZip')
@@ -157,7 +217,7 @@ class MaerskApi():
 			print(f"Error occurred: {e}")
 			return None
 
-	def xml_to_dict(self, xml_string):
+	def quote_to_dict(self, xml_string):
 		# Parse the XML string
 		root = ET.fromstring(xml_string)
 
@@ -306,42 +366,305 @@ class MaerskApi():
 
 		return result
 
+	def shipment_to_dict(self, xml_string):
+		# Parse the XML string
+		root = ET.fromstring(xml_string)
+
+		# Define the namespaces
+		namespaces = {
+			'soap': 'http://www.w3.org/2003/05/soap-envelope',
+			'diff': 'urn:schemas-microsoft-com:xml-diffgram-v1',
+			'ds': 'http://tempuri.org/dsShipment.xsd'
+		}
+
+		# Navigate to dsShipment elements
+		diffgram = root.find('.//diff:diffgram', namespaces)
+		ds_shipment = diffgram.find('.//ds:dsShipment', namespaces)
+
+		if ds_shipment is None:
+			raise ValueError("ds_shipment element not found in the XML.")
+
+		# Helper function to extract text from an element
+		def get_text(element, tag):
+			if element is None:
+				return ''
+			child = element.find(tag, namespaces)
+
+			return child.text if child is not None else ''
+
+		result = {
+			"Shipment": {
+				"QuoteId": "string",
+				"LocationId": "string",
+				"TransportByAir": "string",
+				"IATA_Classifications": "string",
+				"PackingContainers": "string",
+				"DeclaredValue": "string",
+				"COD": "string",
+				"TariffId": "string",
+				"TariffName": "string",
+				"TariffCode": "string",
+				"Notes": "string",
+				"Service": "string",
+				"AirtrakServiceCode": "string",
+				"TariffExtension": "string",
+				"QuoteDate": "string",
+				"HoldAtAirport": "string",
+				"ControlStation": "string",
+				"ProNumber": "string",
+				"ConsigneeAttn": "string",
+				"ThirdPartyAuth": "string",
+				"ShipperRef": "string",
+				"ConsigneeRef": "string",
+				"DeliveryDate": "string",
+				"AmountDueConsignee": "string",
+				"ShipDate": "2025-02-02T21:30:11.261Z",
+				"OverSized": "string",
+				"PayType": "string",
+				"POD": "string",
+				"SatDelivery": "string",
+				"SpecialInstructions": "string",
+				"ReadyTime": "2025-02-02T21:30:11.261Z",
+				"CloseTime": "2025-02-02T21:30:11.261Z",
+				"HomeDelivery": "string",
+				"ShipmentId": "string",
+				"LockDate": "string",
+				"LockUser": "string",
+				"LastUpdate": "2025-02-02T21:30:11.261Z",
+				"AddressId": "string",
+				"Platinum": "string",
+				"IsShipper": "string",
+				"GBL": "string",
+				"IsInsurance": "string",
+				"Condition": "string",
+				"Packaging": "string",
+				"TariffHeaderId": "string",
+				"ProductName": "string",
+				"ProductDescription": "string",
+				"DebrisRemoval": "string",
+				"IsScreeningConsent": "string",
+				"EmailBOL": "string",
+				"ServiceName": "string",
+				"Hazmat": "string",
+				"HazmatNumber": "string",
+				"HazmatClass": "string",
+				"HazmatPhone": "string",
+				"IsDistribution": "string",
+				"DeliveryStartTime": "string",
+				"AirtrakQuoteNo": "string",
+				"Shipper": {
+					"ShipmentId": "string",
+					"Name": "string",
+					"Address1": "string",
+					"Address2": "string",
+					"Address3": "string",
+					"City": "string",
+					"State": "string",
+					"Zipcode": "string",
+					"Country": "string",
+					"Airport": "string",
+					"Owner": "string",
+					"Attempted": "string",
+					"PrivateRes": "string",
+					"Hotel": "string",
+					"InsIde": "string",
+					"Liftgate": "string",
+					"TwoManHours": "string",
+					"WaitTimeHours": "string",
+					"Special": "string",
+					"DedicatedVehicle": "string",
+					"Miles": "string",
+					"Canadian": "string",
+					"ServiceCode": "string",
+					"Convention": "string",
+					"Contact": "string",
+					"Phone": "string",
+					"Extension": "string",
+					"Email": "string",
+					"SendEmail": "string"
+				},
+				"Consignee": {
+					"ShipmentId": "string",
+					"Name": "string",
+					"Address1": "string",
+					"Address2": "string",
+					"Address3": "string",
+					"City": "string",
+					"State": "string",
+					"Zipcode": "string",
+					"Country": "string",
+					"Airport": "string",
+					"Owner": "string",
+					"Attempted": "string",
+					"PrivateRes": "string",
+					"Hotel": "string",
+					"InsIde": "string",
+					"Liftgate": "string",
+					"TwoManHours": "string",
+					"WaitTimeHours": "string",
+					"Special": "string",
+					"DedicatedVehicle": "string",
+					"Miles": "string",
+					"Canadian": "string",
+					"ServiceCode": "string",
+					"Convention": "string",
+					"Contact": "string",
+					"Phone": "string",
+					"Extension": "string",
+					"Email": "string",
+					"SendEmail": "string"
+				},
+				"ThirdParty": {
+					"ShipmentId": "string",
+					"Name": "string",
+					"Address1": "string",
+					"Address2": "string",
+					"Address3": "string",
+					"City": "string",
+					"State": "string",
+					"Zipcode": "string",
+					"Country": "string",
+					"Contact": "string",
+					"Phone": "string",
+					"Extension": "string",
+					"Email": "string",
+					"SendEmail": "string"
+				},
+				"LineItem": [
+					{
+						"ShipmentId": "string",
+						"LineRow": 0,
+						"PackageType": "string",
+						"Pieces": 0,
+						"Weight": 0,
+						"Description": "string",
+						"Length": 0,
+						"Width": 0,
+						"Height": 0,
+						"Kilos": 0
+					}
+				],
+				"Quote": {
+					"ShipmentId": "string",
+					"Service": "string",
+					"DimWeight": "string",
+					"TotalQuote": "string",
+					"Oversized": "string",
+					"AbleToCalculate": "string",
+					"ChargeWeight": "string",
+					"Beyond": "string",
+					"DisplayService": "string",
+					"TopLine": "string",
+					"UpgradeRequiredForServiceArea": "string",
+					"LinkForShipping": "string",
+					"Breakdown": {
+						"ShipmentId": "string",
+						"ChargeCode": "string",
+						"Charge": "string",
+						"BillCodeName": "string"
+					}
+				},
+				"InternationalServices": {
+					"ShipmentId": "string",
+					"ShipmentType": "string",
+					"Service": "string",
+					"Incoterms": "string",
+					"CustomsValue": "string"
+				},
+				"International": {
+					"ShipmentId": "string",
+					"USPPI_EIN": "string",
+					"PartiesToTransaction": "string",
+					"IntermediateConsignee": "string",
+					"MethodOfTransportation": "string",
+					"ConsolIdateOrDirect": "string",
+					"ShipmentReferenceNumber": "string",
+					"EntryNumber": "string",
+					"InBondCode": "string",
+					"RoutedExportTransaction": "string",
+					"LicenseNumber": "string",
+					"ECCN": "string",
+					"HazMat": "string",
+					"LicenseValue": "string",
+					"InBondCodeValue": "string",
+					"MethodOfTransportationValue": "string"
+				},
+				"OtherReferences": [
+					{
+						"ShipmentId": "string",
+						"Reference": "string",
+						"ReferenceType": "string"
+					}
+				],
+				"ScheduleBLines": {
+					"ScheduleBId": "string",
+					"ShipmentId": "string",
+					"ScheduleBLine": "string",
+					"DForM": "string",
+					"ScheduleBNumber": "string",
+					"Quantity": "string",
+					"Weight": "string",
+					"VinNumber": "string",
+					"DollarValue": "string",
+					"ScheduleBCode": "string"
+				},
+				"ShipmentCustomerInfo": {
+					"User_Email": "string",
+					"User_Name": "string",
+					"User_Phone": "string",
+					"Name": "string",
+					"Address1": "string",
+					"Address2": "string",
+					"City": "string",
+					"State": "string",
+					"Zip": "string",
+					"Country": "string"
+				}
+			}
+		}
+
+		return result
+
 
 if __name__ == '__main__':
 	api = MaerskApi()
 	# response = api.find_origin_by_zip('30044')
 	# response = api.service_info(sOriginZip='90001', sDestZip='30044')
 
-	response = api.get_new_quote_rest()
+	# response = api.get_new_quote()
+	# response = api.get_new_quote_rest()
 	# print(f"quote template : {response.text}")
-	ratingRootObject = api.xml_to_dict(response.text)
+	# ratingRootObject = api.xml_to_dict(response.text)
 
 	# Sample Data
-	data = {
-		"LocationID": os.getenv('LOCATIONID'),
-		"Shipper": {
-			"Zipcode": "90001"
-		},
-		"Consignee": {
-			"Zipcode": "30044"
-		},
-		"LineItems": [
-			{
-				"Pieces": "1",
-				"Weight": "1",
-				"Description": "ride on car toys",
-				"Length": "1",
-				"Width": "1",
-				"Height": "1"
-			}
-		],
-		"TariffHeaderID": os.getenv('TARIFFHEADERID')
-	}
+	# data = {
+	# 	"LocationID": os.getenv('LOCATIONID'),
+	# 	"Shipper": {
+	# 		"Zipcode": "90001"
+	# 	},
+	# 	"Consignee": {
+	# 		"Zipcode": "30044"
+	# 	},
+	# 	"LineItems": [
+	# 		{
+	# 			"Pieces": "1",
+	# 			"Weight": "1",
+	# 			"Description": "ride on car toys",
+	# 			"Length": "1",
+	# 			"Width": "1",
+	# 			"Height": "1"
+	# 		}
+	# 	],
+	# 	"TariffHeaderID": os.getenv('TARIFFHEADERID')
+	# }
 
-	response = api.get_rating_rest(ratingRootObject, data)
+	# response = api.get_rating_rest(ratingRootObject, data)
 
 	# data = {'id': '1234'}
 	# result = api.update_quote(response.text, data)
 	# print(f"updated quote: {result}")
 
-	print(response)
+	response = api.get_new_shipment_rest()
+	# result = api.shipment_to_dict(response.content)
+
+	print(response.text)

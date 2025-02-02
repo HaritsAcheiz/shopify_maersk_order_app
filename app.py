@@ -265,7 +265,7 @@ def get_shipping_options():
     order_data = json_data['data']['order']
 
     quote = maerskapi.get_new_quote_rest()
-    ratingRootObject = maerskapi.xml_to_dict(quote.text)
+    ratingRootObject = maerskapi.quote_to_dict(quote.text)
 
     # Sample Data
     order_items = order_data['lineItems']['edges']
