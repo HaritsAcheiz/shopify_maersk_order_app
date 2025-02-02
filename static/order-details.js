@@ -152,9 +152,10 @@ function printLabel() {
 }
 
 function fetchShippingOptions() {
-    let zipcode = document.getElementById("originZipcode").value || "91710"; // Default ZIP code
+    let zipcode = document.getElementById("originZipcode").value || "91710";
+    let ordername = document.getElementById("orderName").textContent;
 
-    fetch(`/get-shipping-options?zipcode=${zipcode}`)
+    fetch(`/get-shipping-options?zipcode=${zipcode}&ordername=${ordername}`)
         .then(response => response.json())
         .then(data => {
             let shippingSection = document.getElementById("shippingOptionsSection");

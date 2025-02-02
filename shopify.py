@@ -415,10 +415,28 @@ class ShopifyApi():
 								edges {
 									node {
 										title
-										quantity
+										name
+										currentQuantity
+										product{
+											variants(first: 1){
+												edges{
+													node{
+														inventoryItem{
+															measurement{
+																weight{
+																	value
+																}
+															}
+														}
+													}
+												}
+											}
+										}
 									}
 								}
 							}
+							currentSubtotalLineItemsQuantity
+							currentTotalWeight
 							customer {
 								firstName
 								lastName

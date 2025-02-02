@@ -4,6 +4,7 @@ import logging
 import requests
 from dotenv import load_dotenv
 from shopify import ShopifyApi
+from maersk import MaerskApi
 from barcode import Code128
 from barcode.writer import SVGWriter
 import io
@@ -22,10 +23,12 @@ SHOPIFY_CLIENT_SECRET = os.getenv('P_API_SECRET')
 SHOPIFY_SCOPE = "read_orders,read_products,read_customers"
 REDIRECT_URI = os.getenv('P_REDIRECT_URI')
 api = None
+maerskapi = MaerskApi()
 
 
 def get_order_id(order_name):
     global api
+    print(order_name)
     response = api.orders(order_name=order_name)
     
     return response['data']['orders']['edges'][0]['node']['id']
@@ -201,9 +204,7 @@ def order_details():
 
     order_id = get_order_id(order_name)
     json_data = api.order(order_id, mode='details')
-
     order_data = json_data['data']['order']
-    print(order_data)
 
     _items = []
     products = order_data['lineItems']['edges']
@@ -248,11 +249,54 @@ def order_details():
 
 @app.route('/get-shipping-options')
 def get_shipping_options():
-    zipcode = request.args.get('zipcode', '90001')  # Default ZIP code if not provided
+    global maerskapi
+    global api
+
+    zipcode = request.args.get('zipcode', '91710')  # Default ZIP code if not provided
+    ordername = request.args.get('ordername', '')
+    print(f'ordername: {ordername}')
 
     # Load existing shipping services
-    with open('shipping_services.json', 'r') as file:
-        shipping_services = json.load(file)
+    # with open('shipping_services.json', 'r') as file:
+    #     shipping_services = json.load(file)
+
+    order_id = get_order_id(ordername)
+    json_data = api.order(order_id, mode='details')
+    order_data = json_data['data']['order']
+
+    quote = maerskapi.get_new_quote_rest()
+    ratingRootObject = maerskapi.xml_to_dict(quote.text)
+
+    # Sample Data
+    order_items = order_data['lineItems']['edges']
+    LineItems = []
+    for i in order_items:
+        current_item = {}
+        current_item["Pieces"] = f"{i['node']['currentQuantity']}"
+        # variants = i['node']['product']['variants']['edges']
+        # for variant in variants:
+        #     current_item["Weight"]: variant['node']['inventoryItem']['measurement']['weight']['value']
+        current_item["Weight"] = f"{int(i['node']['product']['variants']['edges'][0]['node']['inventoryItem']['measurement']['weight']['value'])}"
+        current_item["Description"] = i['node']['title']
+        current_item["Length"] = "1"
+        current_item["Width"] = "1"
+        current_item["Height"] = "1"
+        LineItems.append(current_item.copy())
+
+    data = {
+        "LocationID": os.getenv('LOCATIONID'),
+        "Shipper": {
+            "Zipcode": zipcode
+        },
+        "Consignee": {
+            "Zipcode": order_data['shippingAddress']['zip']
+        },
+        "LineItems": LineItems,
+        "TariffHeaderID": os.getenv('TARIFFHEADERID')
+    }
+
+    shipping_services = maerskapi.get_rating_rest(ratingRootObject, data)
+    print(shipping_services)
 
     # You can add filtering logic based on `zipcode` if needed.
     available_services = shipping_services["dsQuote"]["Quote"]

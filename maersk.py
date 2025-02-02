@@ -7,6 +7,7 @@ import ssl
 import requests
 import xml.etree.ElementTree as ET
 import os
+import json
 
 load_dotenv()
 
@@ -135,9 +136,10 @@ class MaerskApi():
 
 		endpoint = 'https://www.pilotssl.com/pilotapi/v1/Ratings'
 
-		payload = ratingRootObject
+		# payload = json.dumps(ratingRootObject)
 		# encoded_payload = urlencode(payload)
 		# content_length = str(len(encoded_payload))
+		payload = ratingRootObject
 
 		headers = {
 			'Content-Type': 'application/json',
