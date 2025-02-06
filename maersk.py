@@ -91,7 +91,8 @@ class MaerskApi():
 			print("Error:", e)
 
 	def get_new_shipment_rest(self):
-		url = "https://ws3.pilotdelivers.com/webservice/wsshipments/Shipment.asmx"
+		# url = "https://ws3.pilotdelivers.com/webservice/wsshipments/Shipment.asmx"
+		url = "https://ws3.pilotdelivers.com/webservice/wsshipmentsdev/Shipment.asmx"
 		headers = {
 			"Content-Type": "application/soap+xml; charset=utf-8",
 			"SOAPAction": "http://tempuri.org/GetNewShipment"
@@ -384,246 +385,439 @@ class MaerskApi():
 		if ds_shipment is None:
 			raise ValueError("ds_shipment element not found in the XML.")
 
+		required_fields = ['QuoteID', 'LocationID', 'ShipDate']
+
+		# for i in required_fields:
+		#     value_with_ns = ds_shipment.find(f'ds:{i}', namespaces)
+		#     value_without_ns = ds_shipment.find(i)
+		#     wildcard_value = ds_shipment.find(f'.//{{*}}{i}').text
+
+		#     print(f"With namespace ({i}): {value_with_ns}")
+		#     print(f"Without namespace ({i}): {value_without_ns}")
+		#     print(f"Wildcard namespace ({i}): {wildcard_value}")
+
+		# Navigate to dsShipment elements
+		diffgram = root.find('.//diff:diffgram', namespaces)
+		if diffgram is None:
+			raise ValueError("diffgram element not found in the XML.")
+
+		ds_shipment = diffgram.find('.//ds:dsShipment', namespaces)
+		if ds_shipment is None:
+			raise ValueError("ds_shipment element not found in the XML.")
+
+		# Find the Shipment element
+		shipment = ds_shipment.find('ds:Shipment', namespaces)
+		if shipment is None:
+			raise ValueError("Shipment element not found in ds_shipment.")
+
+		# Helper function to extract text from an element
+		def get_text(element, tag):
+			child = element.find(f'ds:{tag}', namespaces)
+			return child.text if child is not None else None
+
 		# Helper function to extract text from an element
 		def get_text(element, tag):
 			if element is None:
 				return ''
-			child = element.find(tag, namespaces)
+			child = element.find(f'ds:{tag}', namespaces)
 
 			return child.text if child is not None else ''
 
 		result = {
 			"Shipment": {
-				"QuoteId": "string",
-				"LocationId": "string",
-				"TransportByAir": "string",
-				"IATA_Classifications": "string",
-				"PackingContainers": "string",
-				"DeclaredValue": "string",
-				"COD": "string",
-				"TariffId": "string",
-				"TariffName": "string",
-				"TariffCode": "string",
-				"Notes": "string",
-				"Service": "string",
-				"AirtrakServiceCode": "string",
-				"TariffExtension": "string",
-				"QuoteDate": "string",
-				"HoldAtAirport": "string",
-				"ControlStation": "string",
-				"ProNumber": "string",
-				"ConsigneeAttn": "string",
-				"ThirdPartyAuth": "string",
-				"ShipperRef": "string",
-				"ConsigneeRef": "string",
-				"DeliveryDate": "string",
-				"AmountDueConsignee": "string",
-				"ShipDate": "2025-02-02T21:30:11.261Z",
-				"OverSized": "string",
-				"PayType": "string",
-				"POD": "string",
-				"SatDelivery": "string",
-				"SpecialInstructions": "string",
-				"ReadyTime": "2025-02-02T21:30:11.261Z",
-				"CloseTime": "2025-02-02T21:30:11.261Z",
-				"HomeDelivery": "string",
-				"ShipmentId": "string",
-				"LockDate": "string",
-				"LockUser": "string",
-				"LastUpdate": "2025-02-02T21:30:11.261Z",
-				"AddressId": "string",
-				"Platinum": "string",
-				"IsShipper": "string",
-				"GBL": "string",
-				"IsInsurance": "string",
-				"Condition": "string",
-				"Packaging": "string",
-				"TariffHeaderId": "string",
-				"ProductName": "string",
-				"ProductDescription": "string",
-				"DebrisRemoval": "string",
-				"IsScreeningConsent": "string",
-				"EmailBOL": "string",
-				"ServiceName": "string",
-				"Hazmat": "string",
-				"HazmatNumber": "string",
-				"HazmatClass": "string",
-				"HazmatPhone": "string",
-				"IsDistribution": "string",
-				"DeliveryStartTime": "string",
-				"AirtrakQuoteNo": "string",
+				"QuoteId": get_text(shipment, 'QuoteID'),
+				"LocationId": get_text(shipment, 'LocationID'),
+				"TransportByAir": get_text(shipment, 'TransportByAir'),
+				"IATA_Classifications": get_text(shipment, 'IATA_Classifications'),
+				"PackingContainers": get_text(shipment, 'PackingContainers'),
+				"DeclaredValue": get_text(shipment, 'DeclaredValue'),
+				"COD": get_text(shipment, 'COD'),
+				"TariffId": get_text(shipment, 'TariffID'),
+				"TariffName": get_text(shipment, 'TariffName'),
+				"TariffCode": get_text(shipment, 'TariffCode'),
+				"Notes": get_text(shipment, 'Notes'),
+				"Service": get_text(shipment, 'Service'),
+				"AirtrakServiceCode": get_text(shipment, 'AirtrakServiceCode'),
+				"TariffExtension": get_text(shipment, 'TariffExtension'),
+				"QuoteDate": get_text(shipment, 'QuoteDate'),
+				"HoldAtAirport": get_text(shipment, 'HoldAtAirport'),
+				"ControlStation": get_text(shipment, 'ControlStation'),
+				"ProNumber": get_text(shipment, 'ProNumber'),
+				"ConsigneeAttn": get_text(shipment, 'ConsigneeAttn'),
+				"ThirdPartyAuth": get_text(shipment, 'ThirdPartyAuth'),
+				"ShipperRef": get_text(shipment, 'ShipperRef'),
+				"ConsigneeRef": get_text(shipment, 'ConsigneeRef'),
+				"DeliveryDate": get_text(shipment, 'DeliveryDate'),
+				"AmountDueConsignee": get_text(shipment, 'AmountDueConsignee'),
+				"ShipDate": get_text(shipment, 'ShipDate'),
+				"OverSized": get_text(shipment, 'OverSized'),
+				"PayType": get_text(shipment, 'PayType'),
+				"POD": get_text(shipment, 'POD'),
+				"SatDelivery": get_text(shipment, 'SatDelivery'),
+				"SpecialInstructions": get_text(shipment, 'SpecialInstructions'),
+				"ReadyTime": get_text(shipment, 'ReadyTime'),
+				"CloseTime": get_text(shipment, 'CloseTime'),
+				"HomeDelivery": get_text(shipment, 'HomeDelivery'),
+				"ShipmentId": get_text(shipment, 'ShipmentId'),
+				"LockDate": get_text(shipment, 'LockDate'),
+				"LockUser": get_text(shipment, 'LockUser'),
+				"LastUpdate": get_text(shipment, 'LastUpdate'),
+				"AddressId": get_text(shipment, 'AddressId'),
+				"Platinum": get_text(shipment, 'Platinum'),
+				"IsShipper": get_text(shipment, 'IsShipper'),
+				"GBL": get_text(shipment, 'GBL'),
+				"IsInsurance": get_text(shipment, 'IsInsurance'),
+				"Condition": get_text(shipment, 'Condition'),
+				"Packaging": get_text(shipment, 'Packaging'),
+				"TariffHeaderId": get_text(shipment, 'TariffHeaderID'),
+				"ProductName": get_text(shipment, 'ProductName'),
+				"ProductDescription": get_text(shipment, 'ProductDescription'),
+				"DebrisRemoval": get_text(shipment, 'DebrisRemoval'),
+				"IsScreeningConsent": get_text(shipment, 'IsScreeningConsent'),
+				"EmailBOL": get_text(shipment, 'EmailBOL'),
+				"ServiceName": get_text(shipment, 'ServiceName'),
+				"Hazmat": get_text(shipment, 'Hazmat'),
+				"HazmatNumber": get_text(shipment, 'HazmatNumber'),
+				"HazmatClass": get_text(shipment, 'HazmatClass'),
+				"HazmatPhone": get_text(shipment, 'HazmatPhone'),
+				"IsDistribution": get_text(shipment, 'IsDistribution'),
+				"DeliveryStartTime": get_text(shipment, 'DeliveryStartTime'),
+				"AirtrakQuoteNo": get_text(shipment, 'AirtrakQuoteNo'),
 				"Shipper": {
-					"ShipmentId": "string",
-					"Name": "string",
-					"Address1": "string",
-					"Address2": "string",
-					"Address3": "string",
-					"City": "string",
-					"State": "string",
-					"Zipcode": "string",
-					"Country": "string",
-					"Airport": "string",
-					"Owner": "string",
-					"Attempted": "string",
-					"PrivateRes": "string",
-					"Hotel": "string",
-					"InsIde": "string",
-					"Liftgate": "string",
-					"TwoManHours": "string",
-					"WaitTimeHours": "string",
-					"Special": "string",
-					"DedicatedVehicle": "string",
-					"Miles": "string",
-					"Canadian": "string",
-					"ServiceCode": "string",
-					"Convention": "string",
-					"Contact": "string",
-					"Phone": "string",
-					"Extension": "string",
-					"Email": "string",
-					"SendEmail": "string"
+					"ShipmentId": get_text(shipment.find('Shipper', namespaces), 'ShipmentId'),
+					"Name": get_text(shipment.find('Shipper', namespaces), 'Name'),
+					"Address1": get_text(shipment.find('Shipper', namespaces), 'Address1'),
+					"Address2": get_text(shipment.find('Shipper', namespaces), 'Address2'),
+					"Address3": get_text(shipment.find('Shipper', namespaces), 'Address3'),
+					"City": get_text(shipment.find('Shipper', namespaces), 'City'),
+					"State": get_text(shipment.find('Shipper', namespaces), 'State'),
+					"Zipcode": get_text(shipment.find('Shipper', namespaces), 'Zipcode'),
+					"Country": get_text(shipment.find('Shipper', namespaces), 'Country'),
+					"Airport": get_text(shipment.find('Shipper', namespaces), 'Airport'),
+					"Owner": get_text(shipment.find('Shipper', namespaces), 'Owner'),
+					"Attempted": get_text(shipment.find('Shipper', namespaces), 'Attempted'),
+					"PrivateRes": get_text(shipment.find('Shipper', namespaces), 'PrivateRes'),
+					"Hotel": get_text(shipment.find('Shipper', namespaces), 'Hotel'),
+					"InsIde": get_text(shipment.find('Shipper', namespaces), 'InsIde'),
+					"Liftgate": get_text(shipment.find('Shipper', namespaces), 'Liftgate'),
+					"TwoManHours": get_text(shipment.find('Shipper', namespaces), 'TwoManHours'),
+					"WaitTimeHours": get_text(shipment.find('Shipper', namespaces), 'WaitTimeHours'),
+					"Special": get_text(shipment.find('Shipper', namespaces), 'Special'),
+					"DedicatedVehicle": get_text(shipment.find('Shipper', namespaces), 'DedicatedVehicle'),
+					"Miles": get_text(shipment.find('Shipper', namespaces), 'Miles'),
+					"Canadian": get_text(shipment.find('Shipper', namespaces), 'Canadian'),
+					"ServiceCode": get_text(shipment.find('Shipper', namespaces), 'ServiceCode'),
+					"Convention": get_text(shipment.find('Shipper', namespaces), 'Convention'),
+					"Contact": get_text(shipment.find('Shipper', namespaces), 'Contact'),
+					"Phone": get_text(shipment.find('Shipper', namespaces), 'Phone'),
+					"Extension": get_text(shipment.find('Shipper', namespaces), 'Extension'),
+					"Email": get_text(shipment.find('Shipper', namespaces), 'Email'),
+					"SendEmail": get_text(shipment.find('Shipper', namespaces), 'SendEmail')
 				},
 				"Consignee": {
-					"ShipmentId": "string",
-					"Name": "string",
-					"Address1": "string",
-					"Address2": "string",
-					"Address3": "string",
-					"City": "string",
-					"State": "string",
-					"Zipcode": "string",
-					"Country": "string",
-					"Airport": "string",
-					"Owner": "string",
-					"Attempted": "string",
-					"PrivateRes": "string",
-					"Hotel": "string",
-					"InsIde": "string",
-					"Liftgate": "string",
-					"TwoManHours": "string",
-					"WaitTimeHours": "string",
-					"Special": "string",
-					"DedicatedVehicle": "string",
-					"Miles": "string",
-					"Canadian": "string",
-					"ServiceCode": "string",
-					"Convention": "string",
-					"Contact": "string",
-					"Phone": "string",
-					"Extension": "string",
-					"Email": "string",
-					"SendEmail": "string"
+					"ShipmentId": get_text(shipment.find('Consignee', namespaces), 'ShipmentId'),
+					"Name": get_text(shipment.find('Consignee', namespaces), 'Name'),
+					"Address1": get_text(shipment.find('Consignee', namespaces), 'Address1'),
+					"Address2": get_text(shipment.find('Consignee', namespaces), 'Address2'),
+					"Address3": get_text(shipment.find('Consignee', namespaces), 'Address3'),
+					"City": get_text(shipment.find('Consignee', namespaces), 'City'),
+					"State": get_text(shipment.find('Consignee', namespaces), 'State'),
+					"Zipcode": get_text(shipment.find('Consignee', namespaces), 'Zipcode'),
+					"Country": get_text(shipment.find('Consignee', namespaces), 'Country'),
+					"Airport": get_text(shipment.find('Consignee', namespaces), 'Airport'),
+					"Owner": get_text(shipment.find('Consignee', namespaces), 'Owner'),
+					"Attempted": get_text(shipment.find('Consignee', namespaces), 'Attempted'),
+					"PrivateRes": get_text(shipment.find('Consignee', namespaces), 'PrivateRes'),
+					"Hotel": get_text(shipment.find('Consignee', namespaces), 'Hotel'),
+					"InsIde": get_text(shipment.find('Consignee', namespaces), 'InsIde'),
+					"Liftgate": get_text(shipment.find('Consignee', namespaces), 'Liftgate'),
+					"TwoManHours": get_text(shipment.find('Consignee', namespaces), 'TwoManHours'),
+					"WaitTimeHours": get_text(shipment.find('Consignee', namespaces), 'WaitTimeHours'),
+					"Special": get_text(shipment.find('Consignee', namespaces), 'Special'),
+					"DedicatedVehicle": get_text(shipment.find('Consignee', namespaces), 'DedicatedVehicle'),
+					"Miles": get_text(shipment.find('Consignee', namespaces), 'Miles'),
+					"Canadian": get_text(shipment.find('Consignee', namespaces), 'Canadian'),
+					"ServiceCode": get_text(shipment.find('Consignee', namespaces), 'ServiceCode'),
+					"Convention": get_text(shipment.find('Consignee', namespaces), 'Convention'),
+					"Contact": get_text(shipment.find('Consignee', namespaces), 'Contact'),
+					"Phone": get_text(shipment.find('Consignee', namespaces), 'Phone'),
+					"Extension": get_text(shipment.find('Consignee', namespaces), 'Extension'),
+					"Email": get_text(shipment.find('Consignee', namespaces), 'Email'),
+					"SendEmail": get_text(shipment.find('Consignee', namespaces), 'SendEmail')
 				},
 				"ThirdParty": {
-					"ShipmentId": "string",
-					"Name": "string",
-					"Address1": "string",
-					"Address2": "string",
-					"Address3": "string",
-					"City": "string",
-					"State": "string",
-					"Zipcode": "string",
-					"Country": "string",
-					"Contact": "string",
-					"Phone": "string",
-					"Extension": "string",
-					"Email": "string",
-					"SendEmail": "string"
+					"ShipmentId": get_text(shipment.find('ThirdParty', namespaces), 'ShipmentId'),
+					"Name": get_text(shipment.find('ThirdParty', namespaces), 'Name'),
+					"Address1": get_text(shipment.find('ThirdParty', namespaces), 'Address1'),
+					"Address2": get_text(shipment.find('ThirdParty', namespaces), 'Address2'),
+					"Address3": get_text(shipment.find('ThirdParty', namespaces), 'Address3'),
+					"City": get_text(shipment.find('ThirdParty', namespaces), 'City'),
+					"State": get_text(shipment.find('ThirdParty', namespaces), 'State'),
+					"Zipcode": get_text(shipment.find('ThirdParty', namespaces), 'Zipcode'),
+					"Country": get_text(shipment.find('ThirdParty', namespaces), 'Country'),
+					"Contact": get_text(shipment.find('ThirdParty', namespaces), 'Contact'),
+					"Phone": get_text(shipment.find('ThirdParty', namespaces), 'Phone'),
+					"Extension": get_text(shipment.find('ThirdParty', namespaces), 'Extension'),
+					"Email": get_text(shipment.find('ThirdParty', namespaces), 'Email'),
+					"SendEmail": get_text(shipment.find('ThirdParty', namespaces), 'SendEmail')
 				},
 				"LineItem": [
 					{
-						"ShipmentId": "string",
-						"LineRow": 0,
-						"PackageType": "string",
-						"Pieces": 0,
-						"Weight": 0,
-						"Description": "string",
-						"Length": 0,
-						"Width": 0,
-						"Height": 0,
-						"Kilos": 0
-					}
+						"ShipmentId": get_text(line_item, 'ShipmentId'),
+						"LineRow": get_text(line_item, 'LineRow'),
+						"PackageType": get_text(line_item, 'PackageType'),
+						"Pieces": get_text(line_item, 'Pieces'),
+						"Weight": get_text(line_item, 'Weight'),
+						"Description": get_text(line_item, 'Description'),
+						"Length": get_text(line_item, 'Length'),
+						"Width": get_text(line_item, 'Width'),
+						"Height": get_text(line_item, 'Height'),
+						"Kilos": get_text(line_item, 'Kilos')
+					} for line_item in ds_shipment.findall('LineItems', namespaces)
 				],
 				"Quote": {
-					"ShipmentId": "string",
-					"Service": "string",
-					"DimWeight": "string",
-					"TotalQuote": "string",
-					"Oversized": "string",
-					"AbleToCalculate": "string",
-					"ChargeWeight": "string",
-					"Beyond": "string",
-					"DisplayService": "string",
-					"TopLine": "string",
-					"UpgradeRequiredForServiceArea": "string",
-					"LinkForShipping": "string",
+					"ShipmentId": get_text(shipment.find('Quote', namespaces), 'ShipmentId'),
+					"Service": get_text(shipment.find('Quote', namespaces), 'Service'),
+					"DimWeight": get_text(shipment.find('Quote', namespaces), 'DimWeight'),
+					"TotalQuote": get_text(shipment.find('Quote', namespaces), 'TotalQuote'),
+					"Oversized": get_text(shipment.find('Quote', namespaces), 'Oversized'),
+					"AbleToCalculate": get_text(shipment.find('Quote', namespaces), 'AbleToCalculate'),
+					"ChargeWeight": get_text(shipment.find('Quote', namespaces), 'ChargeWeight'),
+					"Beyond": get_text(shipment.find('Quote', namespaces), 'Beyond'),
+					"DisplayService": get_text(shipment.find('Quote', namespaces), 'DisplayService'),
+					"TopLine": get_text(shipment.find('Quote', namespaces), 'TopLine'),
+					"UpgradeRequiredForServiceArea": get_text(shipment.find('Quote', namespaces), 'UpgradeRequiredForServiceArea'),
+					"LinkForShipping": get_text(shipment.find('Quote', namespaces), 'LinkForShipping'),
 					"Breakdown": {
-						"ShipmentId": "string",
-						"ChargeCode": "string",
-						"Charge": "string",
-						"BillCodeName": "string"
+						"ShipmentId": get_text(shipment.find('Quote/Breakdown', namespaces), 'ShipmentId'),
+						"ChargeCode": get_text(shipment.find('Quote/Breakdown', namespaces), 'ChargeCode'),
+						"Charge": get_text(shipment.find('Quote/Breakdown', namespaces), 'Charge'),
+						"BillCodeName": get_text(shipment.find('Quote/Breakdown', namespaces), 'BillCodeName')
 					}
 				},
 				"InternationalServices": {
-					"ShipmentId": "string",
-					"ShipmentType": "string",
-					"Service": "string",
-					"Incoterms": "string",
-					"CustomsValue": "string"
+					"ShipmentId": get_text(shipment.find('InternationalServices', namespaces), 'ShipmentId'),
+					"ShipmentType": get_text(shipment.find('InternationalServices', namespaces), 'ShipmentType'),
+					"Service": get_text(shipment.find('InternationalServices', namespaces), 'Service'),
+					"Incoterms": get_text(shipment.find('InternationalServices', namespaces), 'Incoterms'),
+					"CustomsValue": get_text(shipment.find('InternationalServices', namespaces), 'CustomsValue')
 				},
 				"International": {
-					"ShipmentId": "string",
-					"USPPI_EIN": "string",
-					"PartiesToTransaction": "string",
-					"IntermediateConsignee": "string",
-					"MethodOfTransportation": "string",
-					"ConsolIdateOrDirect": "string",
-					"ShipmentReferenceNumber": "string",
-					"EntryNumber": "string",
-					"InBondCode": "string",
-					"RoutedExportTransaction": "string",
-					"LicenseNumber": "string",
-					"ECCN": "string",
-					"HazMat": "string",
-					"LicenseValue": "string",
-					"InBondCodeValue": "string",
-					"MethodOfTransportationValue": "string"
+					"ShipmentId": get_text(shipment.find('International', namespaces), 'ShipmentId'),
+					"USPPI_EIN": get_text(shipment.find('International', namespaces), 'USPPI_EIN'),
+					"PartiesToTransaction": get_text(shipment.find('International', namespaces), 'PartiesToTransaction'),
+					"IntermediateConsignee": get_text(shipment.find('International', namespaces), 'IntermediateConsignee'),
+					"MethodOfTransportation": get_text(shipment.find('International', namespaces), 'MethodOfTransportation'),
+					"ConsolIdateOrDirect": get_text(shipment.find('International', namespaces), 'ConsolIdateOrDirect'),
+					"ShipmentReferenceNumber": get_text(shipment.find('International', namespaces), 'ShipmentReferenceNumber'),
+					"EntryNumber": get_text(shipment.find('International', namespaces), 'EntryNumber'),
+					"InBondCode": get_text(shipment.find('International', namespaces), 'InBondCode'),
+					"RoutedExportTransaction": get_text(shipment.find('International', namespaces), 'RoutedExportTransaction'),
+					"LicenseNumber": get_text(shipment.find('International', namespaces), 'LicenseNumber'),
+					"ECCN": get_text(shipment.find('International', namespaces), 'ECCN'),
+					"HazMat": get_text(shipment.find('International', namespaces), 'HazMat'),
+					"LicenseValue": get_text(shipment.find('International', namespaces), 'LicenseValue'),
+					"InBondCodeValue": get_text(shipment.find('International', namespaces), 'InBondCodeValue'),
+					"MethodOfTransportationValue": get_text(shipment.find('International', namespaces), 'MethodOfTransportationValue')
 				},
 				"OtherReferences": [
 					{
-						"ShipmentId": "string",
-						"Reference": "string",
-						"ReferenceType": "string"
-					}
+						"ShipmentId": get_text(shipment, 'ShipmentId'),
+						"Reference": get_text(shipment, 'Reference'),
+						"ReferenceType": get_text(shipment, 'ReferenceType')
+					} for reference in ds_shipment.findall('OtherReferences', namespaces)
 				],
 				"ScheduleBLines": {
-					"ScheduleBId": "string",
-					"ShipmentId": "string",
-					"ScheduleBLine": "string",
-					"DForM": "string",
-					"ScheduleBNumber": "string",
-					"Quantity": "string",
-					"Weight": "string",
-					"VinNumber": "string",
-					"DollarValue": "string",
-					"ScheduleBCode": "string"
+					"ScheduleBId": get_text(shipment.find('ScheduleBLines', namespaces), 'ScheduleBId'),
+					"ShipmentId": get_text(shipment.find('ScheduleBLines', namespaces), 'ShipmentId'),
+					"ScheduleBLine": get_text(shipment.find('ScheduleBLines', namespaces), 'ScheduleBLine'),
+					"DForM": get_text(shipment.find('ScheduleBLines', namespaces), 'DForM'),
+					"ScheduleBNumber": get_text(shipment.find('ScheduleBLines', namespaces), 'ScheduleBNumber'),
+					"Quantity": get_text(shipment.find('ScheduleBLines', namespaces), 'Quantity'),
+					"Weight": get_text(shipment.find('ScheduleBLines', namespaces), 'Weight'),
+					"VinNumber": get_text(shipment.find('ScheduleBLines', namespaces), 'VinNumber'),
+					"DollarValue": get_text(shipment.find('ScheduleBLines', namespaces), 'DollarValue'),
+					"ScheduleBCode": get_text(shipment.find('ScheduleBLines', namespaces), 'ScheduleBCode')
 				},
 				"ShipmentCustomerInfo": {
-					"User_Email": "string",
-					"User_Name": "string",
-					"User_Phone": "string",
-					"Name": "string",
-					"Address1": "string",
-					"Address2": "string",
-					"City": "string",
-					"State": "string",
-					"Zip": "string",
-					"Country": "string"
+					"User_Email": get_text(shipment.find('ShipmentCustomerInfo', namespaces), 'User_Email'),
+					"User_Name": get_text(shipment.find('ShipmentCustomerInfo', namespaces), 'User_Name'),
+					"User_Phone": get_text(shipment.find('ShipmentCustomerInfo', namespaces), 'User_Phone'),
+					"Name": get_text(shipment.find('ShipmentCustomerInfo', namespaces), 'Name'),
+					"Address1": get_text(shipment.find('ShipmentCustomerInfo', namespaces), 'Address1'),
+					"Address2": get_text(shipment.find('ShipmentCustomerInfo', namespaces), 'Address2'),
+					"City": get_text(shipment.find('ShipmentCustomerInfo', namespaces), 'City'),
+					"State": get_text(shipment.find('ShipmentCustomerInfo', namespaces), 'State'),
+					"Zip": get_text(shipment.find('ShipmentCustomerInfo', namespaces), 'Zip'),
+					"Country": get_text(shipment.find('ShipmentCustomerInfo', namespaces), 'Country')
 				}
 			}
 		}
 
 		return result
+
+	def save_shipment_rest(self, rootShipmentObject, data, input_data):
+		# Rating info
+		print('rootShipmentObject')
+		print(rootShipmentObject)
+		print('')
+		print('data')
+		print(data)
+		print('')
+
+		option = input_data['Option']
+		PackageType = input_data['PackageType']
+		Shipper = input_data['Shipper']
+		Consignee = input_data['Consignee']
+		PayType = input_data['PayType']
+		IsScreeningConsent = input_data['IsScreeningConsent']
+
+		rating = data['dsQuote']['Rating'][0]
+		rootShipmentObject['Shipment']['QuoteId'] = str(rating['QuoteID'])
+		rootShipmentObject['Shipment']['LocationId'] = str(rating['LocationID'])
+		rootShipmentObject['Shipment']['TransportByAir'] = str(rating['TransportByAir']).lower()
+		rootShipmentObject['Shipment']['IATA_Classifications'] = str(rating['IATA_Classifications'])
+		rootShipmentObject['Shipment']['PackingContainers'] = str(rating['PackingContainers'])
+		rootShipmentObject['Shipment']['DeclaredValue'] = str(rating['DeclaredValue'])
+		rootShipmentObject['Shipment']['COD'] = str(rating['COD'])
+		rootShipmentObject['Shipment']['TariffId'] = str(rating['TariffID'])
+		rootShipmentObject['Shipment']['TariffName'] = str(rating['TariffName'])
+		rootShipmentObject['Shipment']['Notes'] = str(rating['Notes'])
+		rootShipmentObject['Shipment']['Service'] = data['dsQuote']['Quote'][option]["Service"]
+		rootShipmentObject['Shipment']['QuoteDate'] = rating['QuoteDate']
+		rootShipmentObject['Shipment']['ShipDate'] = rating['ShipDate']
+		rootShipmentObject['Shipment']['PayType'] = PayType
+		rootShipmentObject['Shipment']['IsScreeningConsent'] = IsScreeningConsent
+		rootShipmentObject['Shipment']['TariffHeaderId'] = str(rating['TariffHeaderID'])
+		rootShipmentObject['Shipment']['DebrisRemoval'] = str(rating['DebrisRemoval']).lower()
+		rootShipmentObject['Shipment']['AddressId'] = os.getenv('ADDRESSID')
+
+		# Shipper info
+		shipper = data['dsQuote']['Shipper'][0]
+		rootShipmentObject['Shipment']['Shipper']['Name'] = Shipper['Name']
+		rootShipmentObject['Shipment']['Shipper']['Address1'] = Shipper['Address1']
+		rootShipmentObject['Shipment']['Shipper']['Address2'] = Shipper['Address2']
+		rootShipmentObject['Shipment']['Shipper']['Address3'] = Shipper['Address3']
+		rootShipmentObject['Shipment']['Shipper']['City'] = Shipper['City']
+		rootShipmentObject['Shipment']['Shipper']['State'] = shipper['State']
+		rootShipmentObject['Shipment']['Shipper']['Zipcode'] = shipper['Zipcode']
+		rootShipmentObject['Shipment']['Shipper']['Country'] = shipper['Country']
+		rootShipmentObject['Shipment']['Shipper']['Airport'] = shipper['Airport']
+		rootShipmentObject['Shipment']['Shipper']['Owner'] = Shipper['Owner']
+		rootShipmentObject['Shipment']['Shipper']['Attempted'] = str(shipper['Attempted']).lower()
+		rootShipmentObject['Shipment']['Shipper']['PrivateRes'] = str(shipper['PrivateRes']).lower()
+		rootShipmentObject['Shipment']['Shipper']['Hotel'] = str(shipper['Hotel']).lower()
+		rootShipmentObject['Shipment']['Shipper']['InsIde'] = str(shipper['Inside']).lower()
+		rootShipmentObject['Shipment']['Shipper']['Liftgate'] = str(shipper['Liftgate']).lower()
+		rootShipmentObject['Shipment']['Shipper']['TwoManHours'] = str(shipper['TwoManHours'])
+		rootShipmentObject['Shipment']['Shipper']['WaitTimeHours'] = str(shipper['WaitTimeHours'])
+		rootShipmentObject['Shipment']['Shipper']['Special'] = shipper['Special']
+		rootShipmentObject['Shipment']['Shipper']['DedicatedVehicle'] = str(shipper['DedicatedVehicle'])
+		rootShipmentObject['Shipment']['Shipper']['Miles'] = str(shipper['Miles'])
+		rootShipmentObject['Shipment']['Shipper']['Canadian'] = str(shipper['Canadian']).lower()
+		rootShipmentObject['Shipment']['Shipper']['ServiceCode'] = shipper['ServiceCode']
+		rootShipmentObject['Shipment']['Shipper']['Convention'] = str(shipper['Convention']).lower()
+		rootShipmentObject['Shipment']['Shipper']['Contact'] = Shipper['Contact']
+		rootShipmentObject['Shipment']['Shipper']['Phone'] = Shipper['Phone']
+		rootShipmentObject['Shipment']['Shipper']['Extension'] = Shipper['Extension']
+		rootShipmentObject['Shipment']['Shipper']['Email'] = Shipper['Email']
+		rootShipmentObject['Shipment']['Shipper']['SendEmail'] = Shipper['SendEmail']
+
+		# Consignee info
+		consignee = data['dsQuote']['Consignee'][0]
+		rootShipmentObject['Shipment']['Consignee']['Name'] = Consignee['Name']
+		rootShipmentObject['Shipment']['Consignee']['Address1'] = Consignee['Address1']
+		rootShipmentObject['Shipment']['Consignee']['Address2'] = Consignee['Address2']
+		rootShipmentObject['Shipment']['Consignee']['Address3'] = Consignee['Address3']
+		rootShipmentObject['Shipment']['Consignee']['City'] = Consignee['City']
+		rootShipmentObject['Shipment']['Consignee']['State'] = consignee['State']
+		rootShipmentObject['Shipment']['Consignee']['Zipcode'] = consignee['Zipcode']
+		rootShipmentObject['Shipment']['Consignee']['Country'] = consignee['Country']
+		rootShipmentObject['Shipment']['Consignee']['Airport'] = consignee['Airport']
+		rootShipmentObject['Shipment']['Consignee']['Owner'] = Consignee['Owner']
+		rootShipmentObject['Shipment']['Consignee']['Attempted'] = str(consignee['Attempted']).lower()
+		rootShipmentObject['Shipment']['Consignee']['PrivateRes'] = str(consignee['PrivateRes']).lower()
+		rootShipmentObject['Shipment']['Consignee']['Hotel'] = str(consignee['Hotel']).lower()
+		rootShipmentObject['Shipment']['Consignee']['InsIde'] = str(consignee['Inside']).lower()
+		rootShipmentObject['Shipment']['Consignee']['Liftgate'] = str(consignee['Liftgate']).lower()
+		rootShipmentObject['Shipment']['Consignee']['TwoManHours'] = str(consignee['TwoManHours'])
+		rootShipmentObject['Shipment']['Consignee']['WaitTimeHours'] = str(consignee['WaitTimeHours'])
+		rootShipmentObject['Shipment']['Consignee']['Special'] = consignee['Special']
+		rootShipmentObject['Shipment']['Consignee']['DedicatedVehicle'] = str(consignee['DedicatedVehicle'])
+		rootShipmentObject['Shipment']['Consignee']['Miles'] = str(consignee['Miles'])
+		rootShipmentObject['Shipment']['Consignee']['Canadian'] = str(consignee['Canadian']).lower()
+		rootShipmentObject['Shipment']['Consignee']['ServiceCode'] = consignee['ServiceCode']
+		rootShipmentObject['Shipment']['Consignee']['Convention'] = str(consignee['Convention']).lower()
+		rootShipmentObject['Shipment']['Consignee']['Contact'] = Consignee['Contact']
+		rootShipmentObject['Shipment']['Consignee']['Phone'] = Consignee['Phone']
+		rootShipmentObject['Shipment']['Consignee']['Extension'] = Consignee['Extension']
+		rootShipmentObject['Shipment']['Consignee']['Email'] = Consignee['Email']
+		rootShipmentObject['Shipment']['Consignee']['SendEmail'] = Consignee['SendEmail']
+
+		# Line items
+		line_items = []
+		for i in data['dsQuote']['LineItems']:
+			current_item = {}
+			current_item["ShipmentId"] = ""
+			current_item["LineRow"] = str(i['LineRow'])
+			current_item["PackageType"] = PackageType
+			current_item["Pieces"] = str(i['Pieces'])
+			current_item["Weight"] = str(i['Weight'])
+			current_item["Description"] = str(i['Description'])
+			current_item["Length"] = str(i['Length'])
+			current_item["Width"] = str(i['Width'])
+			current_item["Height"] = str(i['Height'])
+			current_item["Kilos"] = ''
+			line_items.append(current_item.copy())
+		rootShipmentObject['Shipment']['LineItem'] = line_items
+
+		# Quote
+		rootShipmentObject['Shipment']['Quote']["ShipmentId"] = ''
+		rootShipmentObject['Shipment']['Quote']["Service"] = data['dsQuote']['Quote'][option]["Service"]
+		rootShipmentObject['Shipment']['Quote']["DimWeight"] = str(data['dsQuote']['Quote'][option]["DimWeight"])
+		rootShipmentObject['Shipment']['Quote']["TotalQuote"] = str(data['dsQuote']['Quote'][option]["TotalQuote"])
+		rootShipmentObject['Shipment']['Quote']["Oversized"] = str(data['dsQuote']['Quote'][option]["Oversized"]).lower()
+		rootShipmentObject['Shipment']['Quote']["AbleToCalculate"] = str(data['dsQuote']['Quote'][option]["AbleToCalculate"]).lower()
+		rootShipmentObject['Shipment']['Quote']["ChargeWeight"] = str(data['dsQuote']['Quote'][option]["ChargeWeight"])
+		rootShipmentObject['Shipment']['Quote']["Beyond"] = str(data['dsQuote']['Quote'][option]["Beyond"]).lower()
+		rootShipmentObject['Shipment']['Quote']["DisplayService"] = data['dsQuote']['Quote'][option]["DisplayService"]
+		rootShipmentObject['Shipment']['Quote']["TopLine"] = str(data['dsQuote']['Quote'][option]["TopLine"])
+		rootShipmentObject['Shipment']['Quote']["UpgradeRequiredForServiceArea"] = str(data['dsQuote']['Quote'][option]["UpgradeRequiredForServiceArea"]).lower()
+		rootShipmentObject['Shipment']['Quote']["LinkForShipping"] = data['dsQuote']['Quote'][option]["LinkForShipping"]
+
+		# Breakdown
+		rootShipmentObject['Shipment']['Quote']['Breakdown']["ShipmentId"] = ""
+		rootShipmentObject['Shipment']['Quote']['Breakdown']["ChargeCode"] = str(data['dsQuote']['Breakdown'][option]['ChargeCode'])
+		rootShipmentObject['Shipment']['Quote']['Breakdown']["Charge"] = str(data['dsQuote']['Breakdown'][option]['Charge'])
+		rootShipmentObject['Shipment']['Quote']['Breakdown']["BillCodeName"] = data['dsQuote']['Breakdown'][option]['BillCodeName']
+
+		# Correction
+		rootShipmentObject['Shipment']['ProNumber'] = ''
+		rootShipmentObject['Shipment']['EmailBOL'] = ''
+
+		endpoint = 'https://www.pilotssl.com/pilotapi/v1/Shipments'
+
+		# payload = json.dumps(ratingRootObject)
+		# encoded_payload = urlencode(payload)
+		# content_length = str(len(encoded_payload))
+		payload = rootShipmentObject
+		print(f'payload: {payload}')
+
+		headers = {
+			'Content-Type': 'application/json',
+			'Accept': 'text/plain',
+			'api-key': os.getenv('P_MAERSK_API_KEY')
+		}
+
+		try:
+			with requests.Session() as client:
+				client.headers.update(headers)
+				response = client.post(endpoint, verify=False, json=payload)
+			response.raise_for_status()
+			return response.json()
+		except Exception as e:
+			print(f"Error occurred: {e}")
+			return None
 
 
 if __name__ == '__main__':
@@ -632,39 +826,74 @@ if __name__ == '__main__':
 	# response = api.service_info(sOriginZip='90001', sDestZip='30044')
 
 	# response = api.get_new_quote()
-	# response = api.get_new_quote_rest()
+	response = api.get_new_quote_rest()
 	# print(f"quote template : {response.text}")
-	# ratingRootObject = api.xml_to_dict(response.text)
+	ratingRootObject = api.quote_to_dict(response.text)
 
 	# Sample Data
-	# data = {
-	# 	"LocationID": os.getenv('LOCATIONID'),
-	# 	"Shipper": {
-	# 		"Zipcode": "90001"
-	# 	},
-	# 	"Consignee": {
-	# 		"Zipcode": "30044"
-	# 	},
-	# 	"LineItems": [
-	# 		{
-	# 			"Pieces": "1",
-	# 			"Weight": "1",
-	# 			"Description": "ride on car toys",
-	# 			"Length": "1",
-	# 			"Width": "1",
-	# 			"Height": "1"
-	# 		}
-	# 	],
-	# 	"TariffHeaderID": os.getenv('TARIFFHEADERID')
-	# }
+	data = {
+		"LocationID": os.getenv('LOCATIONID'),
+		"Shipper": {
+			"Zipcode": "90001"
+		},
+		"Consignee": {
+			"Zipcode": "30044"
+		},
+		"LineItems": [
+			{
+				"Pieces": "1",
+				"Weight": "1",
+				"Description": "ride on car toys",
+				"Length": "1",
+				"Width": "1",
+				"Height": "1"
+			}
+		],
+		"TariffHeaderID": os.getenv('TARIFFHEADERID')
+	}
 
-	# response = api.get_rating_rest(ratingRootObject, data)
+	response = api.get_rating_rest(ratingRootObject, data)
 
 	# data = {'id': '1234'}
 	# result = api.update_quote(response.text, data)
 	# print(f"updated quote: {result}")
 
-	response = api.get_new_shipment_rest()
-	# result = api.shipment_to_dict(response.content)
+	rating_data = response
 
-	print(response.text)
+	response = api.get_new_shipment_rest()
+	rootShipmentObject = api.shipment_to_dict(response.content)
+
+	input_data = {
+		'Option': 0,
+		'PackageType': 'BOX',
+		'PayType': 'C',
+		'IsScreeningConsent': 'false',
+		'Shipper': {
+			'Name': 'abc',
+			'Address1': '123 Main St',
+			'Address2': 'Suite 400',
+			'Address3': '',
+			'City': 'Los Angeles',
+			'Owner': 'John Doe',
+			'Contact': 'Jane Smith',
+			'Phone': '555-123-4567',
+			'Extension': '101',
+			'Email': 'shipper@example.com',
+			'SendEmail': 'true'
+		},
+		'Consignee': {
+			'Name': 'xyz',
+			'Address1': '456 Elm St',
+			'Address2': 'Apt 12B',
+			'Address3': '',
+			'City': 'Lawrenceville',
+			'Owner': 'Alice Johnson',
+			'Contact': 'Bob Williams',
+			'Phone': '555-987-6543',
+			'Extension': '202',
+			'Email': 'contact@xyzshipping.com',
+			'SendEmail': 'No'
+		}
+	}
+	response = api.save_shipment_rest(rootShipmentObject, rating_data, input_data)
+	print(response)

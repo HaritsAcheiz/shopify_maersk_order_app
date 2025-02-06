@@ -254,11 +254,6 @@ def get_shipping_options():
 
     zipcode = request.args.get('zipcode', '91710')  # Default ZIP code if not provided
     ordername = request.args.get('ordername', '')
-    print(f'ordername: {ordername}')
-
-    # Load existing shipping services
-    # with open('shipping_services.json', 'r') as file:
-    #     shipping_services = json.load(file)
 
     order_id = get_order_id(ordername)
     json_data = api.order(order_id, mode='details')
@@ -296,7 +291,6 @@ def get_shipping_options():
     }
 
     shipping_services = maerskapi.get_rating_rest(ratingRootObject, data)
-    print(shipping_services)
 
     # You can add filtering logic based on `zipcode` if needed.
     available_services = shipping_services["dsQuote"]["Quote"]
