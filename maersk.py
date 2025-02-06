@@ -10,6 +10,7 @@ import os
 import json
 import logging
 from datetime import datetime
+import base64
 
 # logging.basicConfig(level=logging.DEBUG)
 load_dotenv()
@@ -19,6 +20,26 @@ load_dotenv()
 class MaerskApi():
 	base_api_url: str = 'https://pilotws.pilotdelivers.com'
 	session: requests.Session = field(default_factory=requests.Session)
+
+	def save_pdf_from_xml(self, xml_string, output_filename):
+		# Parse the XML string
+		root = ET.fromstring(xml_string)
+
+		# Find the DataStream_Byte element
+		data_stream_byte = root.find(".//{*}DataStream_Byte")  # Wildcard namespace
+		print(data_stream_byte)
+
+		if data_stream_byte is not None and data_stream_byte.text:
+			# Decode the base64 string
+			pdf_data = base64.b64decode(data_stream_byte.text)
+
+		# Write the PDF data to a file
+			with open(output_filename, 'wb') as pdf_file:
+				pdf_file.write(pdf_data)
+
+			print(f"PDF saved as {output_filename}")
+		else:
+			print("DataStream_Byte not found or empty.")
 
 	def get_new_quote(self):
 		settings = zeep.Settings(strict=False)
@@ -201,6 +222,7 @@ class MaerskApi():
 		# encoded_payload = urlencode(payload)
 		# content_length = str(len(encoded_payload))
 		payload = ratingRootObject
+		print(f'ratingRootObject: {payload}')
 
 		headers = {
 			'Content-Type': 'application/json',
@@ -385,17 +407,6 @@ class MaerskApi():
 		if ds_shipment is None:
 			raise ValueError("ds_shipment element not found in the XML.")
 
-		required_fields = ['QuoteID', 'LocationID', 'ShipDate']
-
-		# for i in required_fields:
-		#     value_with_ns = ds_shipment.find(f'ds:{i}', namespaces)
-		#     value_without_ns = ds_shipment.find(i)
-		#     wildcard_value = ds_shipment.find(f'.//{{*}}{i}').text
-
-		#     print(f"With namespace ({i}): {value_with_ns}")
-		#     print(f"Without namespace ({i}): {value_without_ns}")
-		#     print(f"Wildcard namespace ({i}): {wildcard_value}")
-
 		# Navigate to dsShipment elements
 		diffgram = root.find('.//diff:diffgram', namespaces)
 		if diffgram is None:
@@ -409,11 +420,6 @@ class MaerskApi():
 		shipment = ds_shipment.find('ds:Shipment', namespaces)
 		if shipment is None:
 			raise ValueError("Shipment element not found in ds_shipment.")
-
-		# Helper function to extract text from an element
-		def get_text(element, tag):
-			child = element.find(f'ds:{tag}', namespaces)
-			return child.text if child is not None else None
 
 		# Helper function to extract text from an element
 		def get_text(element, tag):
@@ -709,11 +715,11 @@ class MaerskApi():
 		rootShipmentObject['Shipment']['Shipper']['Hotel'] = str(shipper['Hotel']).lower()
 		rootShipmentObject['Shipment']['Shipper']['InsIde'] = str(shipper['Inside']).lower()
 		rootShipmentObject['Shipment']['Shipper']['Liftgate'] = str(shipper['Liftgate']).lower()
-		rootShipmentObject['Shipment']['Shipper']['TwoManHours'] = str(shipper['TwoManHours'])
-		rootShipmentObject['Shipment']['Shipper']['WaitTimeHours'] = str(shipper['WaitTimeHours'])
+		rootShipmentObject['Shipment']['Shipper']['TwoManHours'] = shipper['TwoManHours']
+		rootShipmentObject['Shipment']['Shipper']['WaitTimeHours'] = shipper['WaitTimeHours']
 		rootShipmentObject['Shipment']['Shipper']['Special'] = shipper['Special']
 		rootShipmentObject['Shipment']['Shipper']['DedicatedVehicle'] = str(shipper['DedicatedVehicle'])
-		rootShipmentObject['Shipment']['Shipper']['Miles'] = str(shipper['Miles'])
+		rootShipmentObject['Shipment']['Shipper']['Miles'] = shipper['Miles']
 		rootShipmentObject['Shipment']['Shipper']['Canadian'] = str(shipper['Canadian']).lower()
 		rootShipmentObject['Shipment']['Shipper']['ServiceCode'] = shipper['ServiceCode']
 		rootShipmentObject['Shipment']['Shipper']['Convention'] = str(shipper['Convention']).lower()
@@ -740,11 +746,11 @@ class MaerskApi():
 		rootShipmentObject['Shipment']['Consignee']['Hotel'] = str(consignee['Hotel']).lower()
 		rootShipmentObject['Shipment']['Consignee']['InsIde'] = str(consignee['Inside']).lower()
 		rootShipmentObject['Shipment']['Consignee']['Liftgate'] = str(consignee['Liftgate']).lower()
-		rootShipmentObject['Shipment']['Consignee']['TwoManHours'] = str(consignee['TwoManHours'])
-		rootShipmentObject['Shipment']['Consignee']['WaitTimeHours'] = str(consignee['WaitTimeHours'])
+		rootShipmentObject['Shipment']['Consignee']['TwoManHours'] = consignee['TwoManHours']
+		rootShipmentObject['Shipment']['Consignee']['WaitTimeHours'] = consignee['WaitTimeHours']
 		rootShipmentObject['Shipment']['Consignee']['Special'] = consignee['Special']
 		rootShipmentObject['Shipment']['Consignee']['DedicatedVehicle'] = str(consignee['DedicatedVehicle'])
-		rootShipmentObject['Shipment']['Consignee']['Miles'] = str(consignee['Miles'])
+		rootShipmentObject['Shipment']['Consignee']['Miles'] = consignee['Miles']
 		rootShipmentObject['Shipment']['Consignee']['Canadian'] = str(consignee['Canadian']).lower()
 		rootShipmentObject['Shipment']['Consignee']['ServiceCode'] = consignee['ServiceCode']
 		rootShipmentObject['Shipment']['Consignee']['Convention'] = str(consignee['Convention']).lower()
@@ -761,12 +767,12 @@ class MaerskApi():
 			current_item["ShipmentId"] = ""
 			current_item["LineRow"] = str(i['LineRow'])
 			current_item["PackageType"] = PackageType
-			current_item["Pieces"] = str(i['Pieces'])
-			current_item["Weight"] = str(i['Weight'])
-			current_item["Description"] = str(i['Description'])
-			current_item["Length"] = str(i['Length'])
-			current_item["Width"] = str(i['Width'])
-			current_item["Height"] = str(i['Height'])
+			current_item["Pieces"] = i['Pieces']
+			current_item["Weight"] = i['Weight']
+			current_item["Description"] = i['Description']
+			current_item["Length"] = i['Length']
+			current_item["Width"] = i['Width']
+			current_item["Height"] = i['Height']
 			current_item["Kilos"] = ''
 			line_items.append(current_item.copy())
 		rootShipmentObject['Shipment']['LineItem'] = line_items
@@ -819,6 +825,53 @@ class MaerskApi():
 			print(f"Error occurred: {e}")
 			return None
 
+	def void_shipment_rest(self, ProNumber):
+		endpoint = f'https://www.pilotssl.com/pilotapi/v1/Shipments/Void/{str(ProNumber)}'
+		print(endpoint)
+
+		payload = {
+			"LocationId": os.getenv('LOCATIONID'),
+			"AddressId": os.getenv('ADDRESSID'),
+			"ControlStation": os.getenv('CONTROLSTN'),
+			"TariffHeaderID": os.getenv('TARIFFHEADERID'),
+			"ProNumber": str(ProNumber)
+		}
+		print(payload)
+
+		headers = {
+			'Content-Type': 'application/json',
+			'Accept': 'application/json',
+			'api-key': os.getenv('P_MAERSK_API_KEY')
+		}
+
+		try:
+			with requests.Session() as client:
+				client.headers.update(headers)
+				response = client.post(endpoint, verify=False, json=payload)
+			response.raise_for_status()
+			return response
+		except Exception as e:
+			print(f"Error occurred: {e}")
+			return None
+
+	def get_label(self, ProNumber, labelType, Zipcode):
+		endpoint = 'https://pilotws.pilotdelivers.com/copilotforms/wsforms.asmx/HAWBLabel'
+
+		params = {
+			"shawb": ProNumber,
+			"eLabelType": labelType,
+			"szip": Zipcode
+		}
+
+		try:
+			with requests.Session() as client:
+				response = client.get(endpoint, verify=False, params=params)
+			response.raise_for_status()
+			return response
+		except Exception as e:
+			print(f"Error occurred: {e}")
+			return None
+
 
 if __name__ == '__main__':
 	api = MaerskApi()
@@ -826,74 +879,84 @@ if __name__ == '__main__':
 	# response = api.service_info(sOriginZip='90001', sDestZip='30044')
 
 	# response = api.get_new_quote()
-	response = api.get_new_quote_rest()
-	# print(f"quote template : {response.text}")
-	ratingRootObject = api.quote_to_dict(response.text)
+	# response = api.get_new_quote_rest()
+	# # print(f"quote template : {response.text}")
+	# ratingRootObject = api.quote_to_dict(response.text)
 
-	# Sample Data
-	data = {
-		"LocationID": os.getenv('LOCATIONID'),
-		"Shipper": {
-			"Zipcode": "90001"
-		},
-		"Consignee": {
-			"Zipcode": "30044"
-		},
-		"LineItems": [
-			{
-				"Pieces": "1",
-				"Weight": "1",
-				"Description": "ride on car toys",
-				"Length": "1",
-				"Width": "1",
-				"Height": "1"
-			}
-		],
-		"TariffHeaderID": os.getenv('TARIFFHEADERID')
-	}
+	# # Sample Data
+	# data = {
+	# 	"LocationID": os.getenv('LOCATIONID'),
+	# 	"Shipper": {
+	# 		"Zipcode": "90001"
+	# 	},
+	# 	"Consignee": {
+	# 		"Zipcode": "30044"
+	# 	},
+	# 	"LineItems": [
+	# 		{
+	# 			"Pieces": "1",
+	# 			"Weight": "1",
+	# 			"Description": "ride on car toys",
+	# 			"Length": "1",
+	# 			"Width": "1",
+	# 			"Height": "1"
+	# 		}
+	# 	],
+	# 	"TariffHeaderID": os.getenv('TARIFFHEADERID')
+	# }
 
-	response = api.get_rating_rest(ratingRootObject, data)
+	# response = api.get_rating_rest(ratingRootObject, data)
 
-	# data = {'id': '1234'}
-	# result = api.update_quote(response.text, data)
-	# print(f"updated quote: {result}")
+	# # data = {'id': '1234'}
+	# # result = api.update_quote(response.text, data)
+	# # print(f"updated quote: {result}")
 
-	rating_data = response
+	# rating_data = response
 
-	response = api.get_new_shipment_rest()
-	rootShipmentObject = api.shipment_to_dict(response.content)
+	# response = api.get_new_shipment_rest()
+	# print(f'new_shipment: {response.content}')
+	# rootShipmentObject = api.shipment_to_dict(response.content)
 
-	input_data = {
-		'Option': 0,
-		'PackageType': 'BOX',
-		'PayType': 'C',
-		'IsScreeningConsent': 'false',
-		'Shipper': {
-			'Name': 'abc',
-			'Address1': '123 Main St',
-			'Address2': 'Suite 400',
-			'Address3': '',
-			'City': 'Los Angeles',
-			'Owner': 'John Doe',
-			'Contact': 'Jane Smith',
-			'Phone': '555-123-4567',
-			'Extension': '101',
-			'Email': 'shipper@example.com',
-			'SendEmail': 'true'
-		},
-		'Consignee': {
-			'Name': 'xyz',
-			'Address1': '456 Elm St',
-			'Address2': 'Apt 12B',
-			'Address3': '',
-			'City': 'Lawrenceville',
-			'Owner': 'Alice Johnson',
-			'Contact': 'Bob Williams',
-			'Phone': '555-987-6543',
-			'Extension': '202',
-			'Email': 'contact@xyzshipping.com',
-			'SendEmail': 'No'
-		}
-	}
-	response = api.save_shipment_rest(rootShipmentObject, rating_data, input_data)
-	print(response)
+	# input_data = {
+	# 	'Option': 0,
+	# 	'PackageType': 'BOX',
+	# 	'PayType': '0',
+	# 	'IsScreeningConsent': 'false',
+	# 	'Shipper': {
+	# 		'Name': 'abc',
+	# 		'Address1': '123 Main St',
+	# 		'Address2': 'Suite 400',
+	# 		'Address3': '',
+	# 		'City': 'Los Angeles',
+	# 		'Owner': 'John Doe',
+	# 		'Contact': 'Jane Smith',
+	# 		'Phone': '555-123-4567',
+	# 		'Extension': '101',
+	# 		'Email': 'shipper@example.com',
+	# 		'SendEmail': 'true'
+	# 	},
+	# 	'Consignee': {
+	# 		'Name': 'xyz',
+	# 		'Address1': '456 Elm St',
+	# 		'Address2': 'Apt 12B',
+	# 		'Address3': '',
+	# 		'City': 'Lawrenceville',
+	# 		'Owner': 'Alice Johnson',
+	# 		'Contact': 'Bob Williams',
+	# 		'Phone': '555-987-6543',
+	# 		'Extension': '202',
+	# 		'Email': 'contact@xyzshipping.com',
+	# 		'SendEmail': 'false'
+	# 	}
+	# }
+	# response = api.save_shipment_rest(rootShipmentObject, rating_data, input_data)
+
+	ProNumber = 400609786
+	labelType = 'Label4x6'
+	Zipcode = 90001
+	# response = api.get_label(ProNumber=ProNumber, labelType=labelType, Zipcode=Zipcode)
+	# print(response.text)
+	# api.save_pdf_from_xml(response.text, 'label.pdf')
+	response = api.void_shipment_rest(ProNumber)
+	print(response.status_code)
+	print(response.json())
