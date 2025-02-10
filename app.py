@@ -28,7 +28,6 @@ maerskapi = MaerskApi()
 
 def get_order_id(order_name):
     global api
-    print(order_name)
     response = api.orders(order_name=order_name)
     
     return response['data']['orders']['edges'][0]['node']['id']
@@ -185,6 +184,13 @@ def search_order():
                 f"{order_data['shippingAddress']['address1']}, {order_data['shippingAddress']['city']}, {order_data['shippingAddress']['country']}, {order_data['shippingAddress']['zip']}"
                 if order_data['shippingAddress'] else "No Address"
             ),
+            "detailAddress": {
+                "address1": order_data['shippingAddress']['address1'],
+                "address2": order_data['shippingAddress']['address2'],
+                "city": order_data['shippingAddress']['city'],
+                "country": order_data['shippingAddress']['country'],
+                "zip": order_data['shippingAddress']['zip'],
+            },
             "actions": "View"
         }
 
@@ -192,7 +198,6 @@ def search_order():
         return render_template('index.html', shop=shop, orders=[order])  # Pass the order as a list
 
     except Exception as e:
-        # print(order_data)
         return jsonify({"error": str(e)}), 500
 
 
@@ -240,6 +245,13 @@ def order_details():
             f"{order_data['shippingAddress']['address1']}, {order_data['shippingAddress']['city']}, {order_data['shippingAddress']['country']}, {order_data['shippingAddress']['zip']}"
             if order_data['shippingAddress'] else "No Address"
         ),
+        "detailAddress": {
+            "address1": order_data['shippingAddress']['address1'],
+            "address2": order_data['shippingAddress']['address2'],
+            "city": order_data['shippingAddress']['city'],
+            "country": order_data['shippingAddress']['country'],
+            "zip": order_data['shippingAddress']['zip'],
+        },
         "paymentStatus": order_data['displayFinancialStatus']
     }
 
@@ -249,6 +261,7 @@ def order_details():
 
 @app.route('/get-shipping-options')
 def get_shipping_options():
+
     global maerskapi
     global api
 
@@ -298,23 +311,28 @@ def get_shipping_options():
     return jsonify(available_services)
 
 
-@app.route('/get-label/<order_id>')
-def get_label(order_id):
-    # In practice, you would fetch the label data from your database
-    ean = Code128(order_id, writer=SVGWriter())
-    barcode_buffer = io.BytesIO()
-    ean.write(barcode_buffer)
-    barcode_svg = barcode_buffer.getvalue().decode('utf-8')
+@app.route('/get-label', methods=['POST'])
+def get_label():
+    payload = request.get_json()
+    payload['Rating']["LocationID"] = os.getenv('LOCATIONID')
+    payload['Rating']["TariffHeaderID"] = os.getenv('TARIFFHEADERID')
 
-    label_data = {
-        'order_number': order_id,
-        'date_created': '12-07-2022',
-        'tracking_number': 'TYPQW050000026',
-        'weight': '50g',
-        'carrier': 'PARCELPLUS',
-        'barcode_svg': barcode_svg
-    }
-    return jsonify(label_data)
+    data = payload
+
+    # response = maerskapi.get_new_quote_rest()
+    # ratingRootObject = maerskapi.quote_to_dict(response.text)
+
+    # response = maerskapi.get_rating_rest(ratingRootObject, data)
+    # rating_data = response
+
+    # response = maerskapi.get_new_shipment_rest()
+    # rootShipmentObject = maerskapi.shipment_to_dict(response.content)
+
+    # input_data = ''
+
+    # response = api.save_shipment_rest(rootShipmentObject, rating_data, input_data)
+
+    return data
 
 
 @app.errorhandler(404)

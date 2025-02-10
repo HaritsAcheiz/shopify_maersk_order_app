@@ -417,10 +417,14 @@ class ShopifyApi():
 										title
 										name
 										currentQuantity
+										variant{
+											price
+										}
 										product{
 											variants(first: 1){
 												edges{
 													node{
+														price
 														inventoryItem{
 															measurement{
 																weight{
@@ -470,6 +474,7 @@ class ShopifyApi():
 							displayFulfillmentStatus
 							shippingAddress {
 								address1
+								address2
 								city
 								country
 								zip
@@ -478,7 +483,10 @@ class ShopifyApi():
 								edges {
 									node {
 										title
-										quantity
+										currentQuantity
+										variant{
+											price
+										}
 									}
 								}
 							}

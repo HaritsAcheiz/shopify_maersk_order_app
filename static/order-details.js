@@ -86,21 +86,125 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-function showLabel(orderId) {
-    fetch(`/get-label/${orderId}`)
-        .then(response => response.json())
+// function showLabel(orderId) {
+//     fetch(`/get-label/${orderId}`)
+//         .then(response => response.json())
+//         .then(data => {
+//             document.getElementById('dateCreated').textContent = data.date_created;
+//             document.getElementById('orderNumber').textContent = data.order_number;
+//             document.getElementById('carrier').textContent = data.carrier;
+//             document.getElementById('weight').textContent = data.weight;
+//             document.getElementById('trackingNumber').textContent = data.tracking_number;
+
+//             // Add the barcode SVG to the modal
+//             const barcodeContainer = document.getElementById('barcode');
+//             barcodeContainer.innerHTML = data.barcode_svg;
+
+//             document.getElementById('labelModal').style.display = 'block';
+//         });
+// }
+
+function showLabel() {
+    let originZipcode = document.getElementById("originZipcode").value || "91710";
+    // Read the JSON from the hidden script tag
+    const orderData = JSON.parse(document.getElementById('order-data').textContent);
+     console.log('orderData:', orderData);
+
+    // Define the payload
+    const payload = {
+        Rating: {
+            LocationID: '',
+            Shipper: {
+                Zipcode: originZipcode
+            },
+            Consignee: {
+                Zipcode: orderData.zip
+            },
+            LineItems: [
+                {
+                    Pieces: '1',
+                    Weight: '1',
+                    Description: 'ride on car toys',
+                    Length: '1',
+                    Width: '1',
+                    Height: '1'
+                }
+            ],
+            TariffHeaderID: ''
+        },
+        Shipment: {
+            Option: 0,
+            PackageType: 'PALLET',
+            PayType: '0',
+            IsScreeningConsent: 'false',
+            Shipper: {
+                Name: 'MAGIC CARS',
+                Address1: '5151 EUCALYPTUS AVENUE',
+                Address2: '',
+                Address3: '',
+                City: 'CHINO',
+                Owner: 'MAGIC CARS',
+                Contact: 'SHIPPING',
+                Phone: '8008285699',
+                Extension: '',
+                Email: '',
+                SendEmail: ''
+            },
+            Consignee: {
+                Name: orderData.customer.name,
+                Address1: orderData.detailAddress.address1,
+                Address2: orderData.detailAddress.address2,
+                Address3: '',
+                City: orderData.detailAddress.city,
+                Owner: orderData.customer.name,
+                Contact: orderData.customer.name,
+                Phone: orderData.customer.phone,
+                Extension: '',
+                Email: orderData.customer.email,
+                SendEmail: ''
+            }
+        }
+    };
+
+    console.log(payload)
+
+    // Send a POST request to the /get-label/<order_id> endpoint
+    fetch(`/get-label`, {
+        method: 'POST', // Use POST method
+        headers: {
+            'Content-Type': 'application/json' // Specify JSON content type
+        },
+        body: JSON.stringify(payload) // Convert payload to JSON string
+    })
+        .then(response => response.json()) // Parse the JSON response
         .then(data => {
-            document.getElementById('dateCreated').textContent = data.date_created;
-            document.getElementById('orderNumber').textContent = data.order_number;
-            document.getElementById('carrier').textContent = data.carrier;
-            document.getElementById('weight').textContent = data.weight;
-            document.getElementById('trackingNumber').textContent = data.tracking_number;
+            // Clear existing content in the modal
+            const modalContent = document.querySelector('.modal-content');
+            modalContent.innerHTML = '';
 
-            // Add the barcode SVG to the modal
-            const barcodeContainer = document.getElementById('barcode');
-            barcodeContainer.innerHTML = data.barcode_svg;
+            // Create a new container for the JSON data
+            const jsonContainer = document.createElement('pre');
+            jsonContainer.style.whiteSpace = 'pre-wrap'; // Ensure JSON is readable
+            jsonContainer.textContent = JSON.stringify(data, null, 2); // Pretty-print JSON
 
+            // Add a close button
+            const closeButton = document.createElement('span');
+            closeButton.className = 'close';
+            closeButton.innerHTML = '&times;';
+            closeButton.onclick = function () {
+                document.getElementById('labelModal').style.display = 'none';
+            };
+
+            // Append the JSON data and close button to the modal
+            modalContent.appendChild(closeButton);
+            modalContent.appendChild(jsonContainer);
+
+            // Show the modal
             document.getElementById('labelModal').style.display = 'block';
+        })
+        .catch(error => {
+            console.error('Error fetching label data:', error);
+            alert('Failed to load shipping label data');
         });
 }
 
@@ -170,7 +274,7 @@ function fetchShippingOptions() {
                         <td>${service.DisplayService}</td>
                         <td>$${service.TotalQuote.toFixed(2)}</td>
                         <td>${service.DeliveryDate.split('T')[0]}</td>
-                        <td><button onclick="showLabel('${service.LinkForShipping}')" class="shipnow-button">Ship Now</button></td>
+                        <td><button onclick="showLabel()" class="shipnow-button">Ship Now</button></td>
                     </tr>`;
                     shippingTable.innerHTML += row;
                 });
@@ -182,4 +286,37 @@ function fetchShippingOptions() {
             console.error("Error fetching shipping options:", error);
             document.getElementById("shippingOptionsSection").style.display = "none";
         });
+}
+
+function getLineItems(orderData) {
+    let lineItems = [];
+
+    if (!orderData._items || orderData._items.length === 0) {
+        return lineItems; // Return empty if no items
+    }
+
+    orderData._items.forEach(item => {
+        let name = item.name;
+        let quantity = item.currentQuantity || 1; // Default to 1 if missing
+        let weight = 1; // Default weight
+
+        // Extract weight dynamically if available
+        try {
+            weight = item.product.variants.edges[0].node.inventoryItem.measurement.weight.value || 1;
+        } catch (error) {
+            console.warn(`Weight not found for item: ${name}, using default 1`);
+        }
+
+        // Push to the lineItems array
+        lineItems.push({
+            Pieces: quantity.toString(),
+            Weight: weight.toString(),
+            Description: name,
+            Length: "1",
+            Width: "1",
+            Height: "1"
+        });
+    });
+
+    return lineItems;
 }

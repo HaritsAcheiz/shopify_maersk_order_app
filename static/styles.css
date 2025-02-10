@@ -236,3 +236,25 @@ body {
     color: #008060;
     margin-right: 8px;
 }
+
+/*.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 80%;
+    max-height: 80%;
+    overflow: auto;
+}*/
+
+pre {
+    background-color: #f4f4f4;
+    padding: 10px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+/*.close {
+    float: right;
+    font-size: 24px;
+    cursor: pointer;
+}*/

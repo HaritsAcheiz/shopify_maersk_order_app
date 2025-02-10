@@ -222,7 +222,6 @@ class MaerskApi():
 		# encoded_payload = urlencode(payload)
 		# content_length = str(len(encoded_payload))
 		payload = ratingRootObject
-		print(f'ratingRootObject: {payload}')
 
 		headers = {
 			'Content-Type': 'application/json',
