@@ -45,16 +45,6 @@
             </div>
         </div>
 
-        <!-- <div class="order-section">
-            <h2 class="order-section-title">Payment</h2>
-            <div class="order-section-content">
-                <p>Subtotal: {{ order_data.subtotal }}</p>
-                <p>Tax: {{ order_data.tax }}</p>
-                <p>Total: {{ order_data.total }}</p>
-                <p>Paid: {{ order_data.paid }}</p>
-            </div>
-        </div> -->
-
         <div class="order-section">
             <h2 class="order-section-title">
                 <span class="status-icon">✓</span>
@@ -130,11 +120,11 @@
             </div>
         </div>
 
-        <div class="order-section">
-            <h2 class="order-section-title">Enter Origin ZIP Code</h2>
-            <div class="order-section-content">
-                <input type="text" id="originZipcode" placeholder="Enter ZIP Code" value="{{ default_zipcode }}">
-                <button onclick="fetchShippingOptions()" class="shipnow-button">Get Shipping Options</button>
+        <div class="order-section-content">
+            <input type="text" id="originZipcode" placeholder="Enter ZIP Code" value="{{ default_zipcode }}">
+            <button id="getShippingOptionsBtn" onclick="fetchShippingOptions()" class="shipnow-button">Get Shipping Options</button>
+            <div id="loadingSpinner" style="display: none;" class="loading-spinner">
+                <img src="{{ url_for('static', filename='icons8-loading.gif') }}" alt="Loading..." />
             </div>
         </div>
 
@@ -156,34 +146,6 @@
                 </table>
             </div>
 </div>
-
-        <!-- Modal Popup -->
-        <!-- <div id="labelModal" class="modal">
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <div class="label-content">
-                    <h2>SHOPIFY - MAERSK E-DELIVERY</h2>
-                    <p>Date created: <span id="dateCreated"></span></p>
-                    <p>Order #<span id="orderNumber"></span></p>
-                    <p>Carrier: <span id="carrier"></span></p>
-                    <div id="barcode"> -->
-                        <!-- Barcode would be generated here -->
-                    <!-- </div>
-                    <p>Weight: <span id="weight"></span></p>
-                    <p>TYPNumber: <span id="trackingNumber"></span></p>
-                </div>
-                <button onclick="printLabel()" class="shipnow-button">Print & Shipping</button>
-            </div>
-        </div> -->
-
-<!--         <div id="labelModal" class="modal">
-            <div class="modal-content"> -->
-                <!-- Close button -->
-                <!-- <span class="close">&times;</span> -->
-                <!-- Container for JSON data -->
-                <!-- <div id="jsonContent"></div> -->
-            <!-- </div> -->
-        <!-- </div> -->
 
         <!-- Modal Popup -->
         <div id="labelModal" class="modal">

@@ -48,7 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchButton.addEventListener('click', (event) => {
         event.preventDefault(); // Prevent default form submission
         const orderId = searchBox.value.trim();
-        console.log('Order ID:', orderId); // Log the order ID
 
         if (!orderId) {
             alert('Please enter an Order ID to search.');

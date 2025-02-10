@@ -666,6 +666,7 @@ class MaerskApi():
 		Consignee = input_data['Shipment']['Consignee']
 		PayType = input_data['Shipment']['PayType']
 		IsScreeningConsent = input_data['Shipment']['IsScreeningConsent']
+		SpecialInstructions: '****DO NOT REMOVE FREIGHT FROM PALLET******************DO NOT STACK ON TOP OF THIS PALLET**DO NOT LEAVE AT DOOR**'
 
 		rating = data['dsQuote']['Rating'][0]
 		rootShipmentObject['Shipment']['QuoteId'] = str(rating['QuoteID'])

@@ -271,3 +271,14 @@ pre {
     border-radius: 4px;
     font-family: monospace;
 }
+
+.loading-spinner {
+    display: inline-block;
+    margin-left: 10px;
+}
+
+
+.loading-spinner img {
+    width: 20px; /* Adjust size as needed */
+    height: 20px; /* Adjust size as needed */
+}

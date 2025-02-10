@@ -86,100 +86,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// function showLabel(optionIndex) {
-//     let originZipcode = document.getElementById("originZipcode").value || "91710";
-//     // Read the JSON from the hidden script tag
-//     const orderData = JSON.parse(document.getElementById('order-data').textContent);
-
-//     // Get the selected shipping option data
-//     const selectedOption = window.shippingOptionsData[optionIndex];
-
-//     // Define the payload
-//     const payload = {
-//         Rating: {
-//             LocationID: '',
-//             Shipper: {
-//                 Zipcode: originZipcode
-//             },
-//             Consignee: {
-//                 Zipcode: orderData.detailAddress.zip
-//             },
-//             LineItems: getLineItems(orderData),
-//             TariffHeaderID: ''
-//         },
-//         Shipment: {
-//             Option: optionIndex, // Use the selected option index
-//             PackageType: 'PALLET',
-//             PayType: '0',
-//             IsScreeningConsent: 'false',
-//             Shipper: {
-//                 Name: 'MAGIC CARS',
-//                 Address1: '5151 EUCALYPTUS AVENUE',
-//                 Address2: '',
-//                 Address3: '',
-//                 City: 'CHINO',
-//                 Owner: 'MAGIC CARS',
-//                 Contact: 'SHIPPING',
-//                 Phone: '8008285699',
-//                 Extension: '',
-//                 Email: '',
-//                 SendEmail: ''
-//             },
-//             Consignee: {
-//                 Name: orderData.customer.name,
-//                 Address1: orderData.detailAddress.address1,
-//                 Address2: orderData.detailAddress.address2,
-//                 Address3: '',
-//                 City: orderData.detailAddress.city,
-//                 Owner: orderData.customer.name,
-//                 Contact: orderData.customer.name,
-//                 Phone: orderData.customer.phone,
-//                 Extension: '',
-//                 Email: orderData.customer.email,
-//                 SendEmail: ''
-//             }
-//         }
-//     };
-
-//     // Send a POST request to the /get-label endpoint
-//     fetch(`/get-label`, {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json'
-//         },
-//         body: JSON.stringify(payload)
-//     })
-//         .then(response => response.json())
-//         .then(data => {
-//             const modalContent = document.querySelector('.modal-content');
-//             modalContent.innerHTML = '';
-
-//             const jsonContainer = document.createElement('pre');
-//             jsonContainer.style.whiteSpace = 'pre-wrap';
-//             jsonContainer.textContent = JSON.stringify(data, null, 2);
-
-//             const closeButton = document.createElement('span');
-//             closeButton.className = 'close';
-//             closeButton.innerHTML = '&times;';
-//             closeButton.onclick = function () {
-//                 document.getElementById('labelModal').style.display = 'none';
-//             };
-
-//             modalContent.appendChild(closeButton);
-//             modalContent.appendChild(jsonContainer);
-//             document.getElementById('labelModal').style.display = 'block';
-//         })
-//         .catch(error => {
-//             console.error('Error fetching label data:', error);
-//             alert('Failed to load shipping label data');
-//         });
-// }
-
 function showLabel(optionIndex) {
     let originZipcode = document.getElementById("originZipcode").value || "91710";
+    // Read the JSON from the hidden script tag
     const orderData = JSON.parse(document.getElementById('order-data').textContent);
+
+    // Get the selected shipping option data
     const selectedOption = window.shippingOptionsData[optionIndex];
 
+    // Define the payload
     const payload = {
         Rating: {
             LocationID: '',
@@ -241,7 +156,6 @@ function showLabel(optionIndex) {
 
         // Get the base64 PDF data
         const base64Data = xmlDoc.querySelector('DataStream_Byte').textContent;
-        console.log(base64Data);
 
         // Convert base64 to blob
         const binaryData = atob(base64Data);
@@ -272,10 +186,10 @@ function showLabel(optionIndex) {
         // Show the modal
         document.getElementById('labelModal').style.display = 'block';
     })
-    // .catch(error => {
-    //     console.error('Error fetching label data:', error);
-    //     alert('Failed to load shipping label data');
-    // });
+    .catch(error => {
+        console.error('Error fetching label data:', error);
+        alert('Failed to load shipping label data');
+    });
 }
 
 // Close modal when clicking the X
@@ -295,43 +209,20 @@ function printLabel() {
     window.print();
 }
 
-// Print label function
-function printLabel() {
-    // Create a new window for printing the shipping label
-    const printWindow = window.open('', '', 'height=600,width=800');
-    printWindow.document.write(`
-        <html>
-        <head>
-            <title>Shipping Label</title>
-            <style>
-                /* Add any necessary styles for the print view */
-                body { font-family: Arial, sans-serif; }
-                .label-content { padding: 20px; }
-            </style>
-        </head>
-        <body onload="window.print(); setTimeout(function() { window.close(); }, 1000);">
-            <div class="label-content">
-                <h2>SHOPIFY - MAERSK E-DELIVERY</h2>
-                <p>Date created: ${document.getElementById('dateCreated').textContent}</p>
-                <p>Order #${document.getElementById('orderNumber').textContent}</p>
-                <p>Carrier: ${document.getElementById('carrier').textContent}</p>
-                <div>${document.getElementById('barcode').innerHTML}</div>
-                <p>Weight: ${document.getElementById('weight').textContent}</p>
-                <p>TYPNumber: ${document.getElementById('trackingNumber').textContent}</p>
-            </div>
-        </body>
-        </html>
-    `);
-    printWindow.document.close();
-}
-
 function fetchShippingOptions() {
     let zipcode = document.getElementById("originZipcode").value || "91710";
     let ordername = document.getElementById("orderName").textContent;
+
+    // Show loading spinner and hide the button
+    const loadingSpinner = document.getElementById("loadingSpinner");
+    const getShippingOptionsBtn = document.getElementById("getShippingOptionsBtn");
+
+    loadingSpinner.style.display = "inline-block"; // Show spinner
+    getShippingOptionsBtn.style.display = "none"; // Hide button
+
     fetch(`/get-shipping-options?zipcode=${zipcode}&ordername=${ordername}`)
         .then(response => response.json())
         .then(data => {
-            console.log(data);
             let shippingSection = document.getElementById("shippingOptionsSection");
             let shippingTable = document.getElementById("shippingOptionsTable");
             shippingTable.innerHTML = ""; // Clear existing data
@@ -355,6 +246,10 @@ function fetchShippingOptions() {
         .catch(error => {
             console.error("Error fetching shipping options:", error);
             document.getElementById("shippingOptionsSection").style.display = "none";
+        })
+        .finally(() => {
+            loadingSpinner.style.display = "none"; // Hide spinner
+            getShippingOptionsBtn.style.display = "inline-block"; // Show button
         });
 }
 
