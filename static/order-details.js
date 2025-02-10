@@ -86,28 +86,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// function showLabel(orderId) {
-//     fetch(`/get-label/${orderId}`)
-//         .then(response => response.json())
-//         .then(data => {
-//             document.getElementById('dateCreated').textContent = data.date_created;
-//             document.getElementById('orderNumber').textContent = data.order_number;
-//             document.getElementById('carrier').textContent = data.carrier;
-//             document.getElementById('weight').textContent = data.weight;
-//             document.getElementById('trackingNumber').textContent = data.tracking_number;
-
-//             // Add the barcode SVG to the modal
-//             const barcodeContainer = document.getElementById('barcode');
-//             barcodeContainer.innerHTML = data.barcode_svg;
-
-//             document.getElementById('labelModal').style.display = 'block';
-//         });
-// }
-
-// function showLabel() {
+// function showLabel(optionIndex) {
 //     let originZipcode = document.getElementById("originZipcode").value || "91710";
 //     // Read the JSON from the hidden script tag
 //     const orderData = JSON.parse(document.getElementById('order-data').textContent);
+
+//     // Get the selected shipping option data
+//     const selectedOption = window.shippingOptionsData[optionIndex];
 
 //     // Define the payload
 //     const payload = {
@@ -123,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
 //             TariffHeaderID: ''
 //         },
 //         Shipment: {
-//             Option: 0,
+//             Option: optionIndex, // Use the selected option index
 //             PackageType: 'PALLET',
 //             PayType: '0',
 //             IsScreeningConsent: 'false',
@@ -156,26 +141,23 @@ document.addEventListener('DOMContentLoaded', () => {
 //         }
 //     };
 
-//     // Send a POST request to the /get-label/<order_id> endpoint
+//     // Send a POST request to the /get-label endpoint
 //     fetch(`/get-label`, {
-//         method: 'POST', // Use POST method
+//         method: 'POST',
 //         headers: {
-//             'Content-Type': 'application/json' // Specify JSON content type
+//             'Content-Type': 'application/json'
 //         },
-//         body: JSON.stringify(payload) // Convert payload to JSON string
+//         body: JSON.stringify(payload)
 //     })
-//         .then(response => response.json()) // Parse the JSON response
+//         .then(response => response.json())
 //         .then(data => {
-//             // Clear existing content in the modal
 //             const modalContent = document.querySelector('.modal-content');
 //             modalContent.innerHTML = '';
 
-//             // Create a new container for the JSON data
 //             const jsonContainer = document.createElement('pre');
-//             jsonContainer.style.whiteSpace = 'pre-wrap'; // Ensure JSON is readable
-//             jsonContainer.textContent = JSON.stringify(data, null, 2); // Pretty-print JSON
+//             jsonContainer.style.whiteSpace = 'pre-wrap';
+//             jsonContainer.textContent = JSON.stringify(data, null, 2);
 
-//             // Add a close button
 //             const closeButton = document.createElement('span');
 //             closeButton.className = 'close';
 //             closeButton.innerHTML = '&times;';
@@ -183,11 +165,8 @@ document.addEventListener('DOMContentLoaded', () => {
 //                 document.getElementById('labelModal').style.display = 'none';
 //             };
 
-//             // Append the JSON data and close button to the modal
 //             modalContent.appendChild(closeButton);
 //             modalContent.appendChild(jsonContainer);
-
-//             // Show the modal
 //             document.getElementById('labelModal').style.display = 'block';
 //         })
 //         .catch(error => {
@@ -198,13 +177,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function showLabel(optionIndex) {
     let originZipcode = document.getElementById("originZipcode").value || "91710";
-    // Read the JSON from the hidden script tag
     const orderData = JSON.parse(document.getElementById('order-data').textContent);
-
-    // Get the selected shipping option data
     const selectedOption = window.shippingOptionsData[optionIndex];
 
-    // Define the payload
     const payload = {
         Rating: {
             LocationID: '',
@@ -218,7 +193,7 @@ function showLabel(optionIndex) {
             TariffHeaderID: ''
         },
         Shipment: {
-            Option: optionIndex, // Use the selected option index
+            Option: optionIndex,
             PackageType: 'PALLET',
             PayType: '0',
             IsScreeningConsent: 'false',
@@ -251,7 +226,6 @@ function showLabel(optionIndex) {
         }
     };
 
-    // Send a POST request to the /get-label endpoint
     fetch(`/get-label`, {
         method: 'POST',
         headers: {
@@ -259,30 +233,49 @@ function showLabel(optionIndex) {
         },
         body: JSON.stringify(payload)
     })
-        .then(response => response.json())
-        .then(data => {
-            const modalContent = document.querySelector('.modal-content');
-            modalContent.innerHTML = '';
+    .then(response => response.text())
+    .then(data => {
+        // Parse the XML string
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(data, "text/xml");
 
-            const jsonContainer = document.createElement('pre');
-            jsonContainer.style.whiteSpace = 'pre-wrap';
-            jsonContainer.textContent = JSON.stringify(data, null, 2);
+        // Get the base64 PDF data
+        const base64Data = xmlDoc.querySelector('DataStream_Byte').textContent;
+        console.log(base64Data);
 
-            const closeButton = document.createElement('span');
-            closeButton.className = 'close';
-            closeButton.innerHTML = '&times;';
-            closeButton.onclick = function () {
-                document.getElementById('labelModal').style.display = 'none';
-            };
+        // Convert base64 to blob
+        const binaryData = atob(base64Data);
+        const array = new Uint8Array(binaryData.length);
+        for (let i = 0; i < binaryData.length; i++) {
+            array[i] = binaryData.charCodeAt(i);
+        }
+        const pdfBlob = new Blob([array], { type: 'application/pdf' });
 
-            modalContent.appendChild(closeButton);
-            modalContent.appendChild(jsonContainer);
-            document.getElementById('labelModal').style.display = 'block';
-        })
-        .catch(error => {
-            console.error('Error fetching label data:', error);
-            alert('Failed to load shipping label data');
-        });
+        // Create object URL
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+
+        // Update modal content
+        const modalContent = document.querySelector('.modal-content');
+        modalContent.innerHTML = `
+            <span class="close">&times;</span>
+            <iframe src="${pdfUrl}" width="100%" height="600px" style="border: none;"></iframe>
+        `;
+
+        // Set up close button functionality
+        const closeButton = modalContent.querySelector('.close');
+        closeButton.onclick = function() {
+            document.getElementById('labelModal').style.display = 'none';
+            // Clean up the object URL when closing
+            URL.revokeObjectURL(pdfUrl);
+        };
+
+        // Show the modal
+        document.getElementById('labelModal').style.display = 'block';
+    })
+    // .catch(error => {
+    //     console.error('Error fetching label data:', error);
+    //     alert('Failed to load shipping label data');
+    // });
 }
 
 // Close modal when clicking the X
@@ -331,39 +324,6 @@ function printLabel() {
     `);
     printWindow.document.close();
 }
-
-// function fetchShippingOptions() {
-//     let zipcode = document.getElementById("originZipcode").value || "91710";
-//     let ordername = document.getElementById("orderName").textContent;
-
-//     fetch(`/get-shipping-options?zipcode=${zipcode}&ordername=${ordername}`)
-//         .then(response => response.json())
-//         .then(data => {
-//             let shippingSection = document.getElementById("shippingOptionsSection");
-//             let shippingTable = document.getElementById("shippingOptionsTable");
-//             shippingTable.innerHTML = ""; // Clear existing data
-
-//             if (data.length > 0) {
-//                 shippingSection.style.display = "block"; // Show the section
-
-//                 data.forEach(service => {
-//                     let row = `<tr>
-//                         <td>${service.DisplayService}</td>
-//                         <td>$${service.TotalQuote.toFixed(2)}</td>
-//                         <td>${service.DeliveryDate.split('T')[0]}</td>
-//                         <td><button onclick="showLabel()" class="shipnow-button">Ship Now</button></td>
-//                     </tr>`;
-//                     shippingTable.innerHTML += row;
-//                 });
-//             } else {
-//                 shippingSection.style.display = "none"; // Hide if no results
-//             }
-//         })
-//         .catch(error => {
-//             console.error("Error fetching shipping options:", error);
-//             document.getElementById("shippingOptionsSection").style.display = "none";
-//         });
-// }
 
 function fetchShippingOptions() {
     let zipcode = document.getElementById("originZipcode").value || "91710";

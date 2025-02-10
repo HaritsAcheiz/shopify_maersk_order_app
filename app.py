@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, session, render_template, jsonify, send_from_directory
+from flask import Flask, request, redirect, session, render_template, jsonify, send_from_directory, Response
 import os
 import logging
 import requests
@@ -312,35 +312,51 @@ def get_shipping_options():
 
 @app.route('/get-label', methods=['POST'])
 def get_label():
-    # payload = request.get_json()
-    # payload['Rating']["LocationID"] = os.getenv('LOCATIONID')
-    # payload['Rating']["TariffHeaderID"] = os.getenv('TARIFFHEADERID')
+    # try:
+    payload = request.get_json()
+    payload['Rating']["LocationID"] = os.getenv('LOCATIONID')
+    payload['Rating']["TariffHeaderID"] = os.getenv('TARIFFHEADERID')
 
-    # data = payload
+    data = payload
 
-    # response = maerskapi.get_new_quote_rest()
-    # ratingRootObject = maerskapi.quote_to_dict(response.text)
+    response = maerskapi.get_new_quote_rest()
+    ratingRootObject = maerskapi.quote_to_dict(response.text)
 
-    # response = maerskapi.get_rating_rest(ratingRootObject, data)
-    # rating_data = response
+    response = maerskapi.get_rating_rest(ratingRootObject, data)
+    rating_data = response
 
-    # response = maerskapi.get_new_shipment_rest()
-    # rootShipmentObject = maerskapi.shipment_to_dict(response.content)
+    response = maerskapi.get_new_shipment_rest()
+    rootShipmentObject = maerskapi.shipment_to_dict(response.content)
 
     # response = maerskapi.save_shipment_rest(rootShipmentObject, rating_data, data)
 
-    ProNumber = 400615691
+    with open('save_shipment_output.json', 'r') as file:
+        response = json.load(file)
+
+    # ProNumber = 400615691
+    ProNumber = response['dsResult']['Shipment'][0]['ProNumber']
     labelType = 'Label4x6'
-    Zipcode = 91710
+    # Zipcode = 91710
+    Zipcode = int(response['dsResult']['Shipper'][0]['Zipcode'].strip())
 
     response = maerskapi.get_label(ProNumber=ProNumber, labelType=labelType, Zipcode=Zipcode)
-    print(response.text)
-    maerskapi.save_pdf_from_xml(response.text, 'label.pdf')
 
-    print(response.status_code)
-    print(response.json())
+    if response.status_code == 200:
+        return Response(
+            response.text,
+            mimetype='application/xml',
+            status=200
+        )
+    else:
+        return jsonify({
+            'error': 'Failed to generate label',
+            'status_code': response.status_code
+        }), response.status_code
 
-    return {"asal": "asal"}
+    # except Exception as e:
+    #     return jsonify({
+    #         'error': str(e)
+    #     }), 500
 
 
 @app.errorhandler(404)
