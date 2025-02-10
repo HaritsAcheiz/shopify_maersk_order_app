@@ -261,7 +261,6 @@ def order_details():
 
 @app.route('/get-shipping-options')
 def get_shipping_options():
-
     global maerskapi
     global api
 
@@ -286,26 +285,26 @@ def get_shipping_options():
         #     current_item["Weight"]: variant['node']['inventoryItem']['measurement']['weight']['value']
         current_item["Weight"] = f"{int(i['node']['product']['variants']['edges'][0]['node']['inventoryItem']['measurement']['weight']['value'])}"
         current_item["Description"] = i['node']['title']
-        current_item["Length"] = "1"
-        current_item["Width"] = "1"
-        current_item["Height"] = "1"
+        current_item["Length"] = "61"
+        current_item["Width"] = "40"
+        current_item["Height"] = "24"
         LineItems.append(current_item.copy())
 
     data = {
-        "LocationID": os.getenv('LOCATIONID'),
-        "Shipper": {
-            "Zipcode": zipcode
-        },
-        "Consignee": {
-            "Zipcode": order_data['shippingAddress']['zip']
-        },
-        "LineItems": LineItems,
-        "TariffHeaderID": os.getenv('TARIFFHEADERID')
+        "Rating": {
+            "LocationID": os.getenv('LOCATIONID'),
+            "Shipper": {
+                "Zipcode": zipcode
+            },
+            "Consignee": {
+                "Zipcode": order_data['shippingAddress']['zip']
+            },
+            "LineItems": LineItems,
+            "TariffHeaderID": os.getenv('TARIFFHEADERID')
+        }
     }
 
     shipping_services = maerskapi.get_rating_rest(ratingRootObject, data)
-
-    # You can add filtering logic based on `zipcode` if needed.
     available_services = shipping_services["dsQuote"]["Quote"]
 
     return jsonify(available_services)
@@ -313,11 +312,11 @@ def get_shipping_options():
 
 @app.route('/get-label', methods=['POST'])
 def get_label():
-    payload = request.get_json()
-    payload['Rating']["LocationID"] = os.getenv('LOCATIONID')
-    payload['Rating']["TariffHeaderID"] = os.getenv('TARIFFHEADERID')
+    # payload = request.get_json()
+    # payload['Rating']["LocationID"] = os.getenv('LOCATIONID')
+    # payload['Rating']["TariffHeaderID"] = os.getenv('TARIFFHEADERID')
 
-    data = payload
+    # data = payload
 
     # response = maerskapi.get_new_quote_rest()
     # ratingRootObject = maerskapi.quote_to_dict(response.text)
@@ -328,11 +327,20 @@ def get_label():
     # response = maerskapi.get_new_shipment_rest()
     # rootShipmentObject = maerskapi.shipment_to_dict(response.content)
 
-    # input_data = ''
+    # response = maerskapi.save_shipment_rest(rootShipmentObject, rating_data, data)
 
-    # response = api.save_shipment_rest(rootShipmentObject, rating_data, input_data)
+    ProNumber = 400615691
+    labelType = 'Label4x6'
+    Zipcode = 91710
 
-    return data
+    response = maerskapi.get_label(ProNumber=ProNumber, labelType=labelType, Zipcode=Zipcode)
+    print(response.text)
+    maerskapi.save_pdf_from_xml(response.text, 'label.pdf')
+
+    print(response.status_code)
+    print(response.json())
+
+    return {"asal": "asal"}
 
 
 @app.errorhandler(404)

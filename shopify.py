@@ -428,6 +428,7 @@ class ShopifyApi():
 														inventoryItem{
 															measurement{
 																weight{
+																	unit
 																	value
 																}
 															}

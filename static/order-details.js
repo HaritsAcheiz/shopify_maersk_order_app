@@ -104,11 +104,105 @@ document.addEventListener('DOMContentLoaded', () => {
 //         });
 // }
 
-function showLabel() {
+// function showLabel() {
+//     let originZipcode = document.getElementById("originZipcode").value || "91710";
+//     // Read the JSON from the hidden script tag
+//     const orderData = JSON.parse(document.getElementById('order-data').textContent);
+
+//     // Define the payload
+//     const payload = {
+//         Rating: {
+//             LocationID: '',
+//             Shipper: {
+//                 Zipcode: originZipcode
+//             },
+//             Consignee: {
+//                 Zipcode: orderData.detailAddress.zip
+//             },
+//             LineItems: getLineItems(orderData),
+//             TariffHeaderID: ''
+//         },
+//         Shipment: {
+//             Option: 0,
+//             PackageType: 'PALLET',
+//             PayType: '0',
+//             IsScreeningConsent: 'false',
+//             Shipper: {
+//                 Name: 'MAGIC CARS',
+//                 Address1: '5151 EUCALYPTUS AVENUE',
+//                 Address2: '',
+//                 Address3: '',
+//                 City: 'CHINO',
+//                 Owner: 'MAGIC CARS',
+//                 Contact: 'SHIPPING',
+//                 Phone: '8008285699',
+//                 Extension: '',
+//                 Email: '',
+//                 SendEmail: ''
+//             },
+//             Consignee: {
+//                 Name: orderData.customer.name,
+//                 Address1: orderData.detailAddress.address1,
+//                 Address2: orderData.detailAddress.address2,
+//                 Address3: '',
+//                 City: orderData.detailAddress.city,
+//                 Owner: orderData.customer.name,
+//                 Contact: orderData.customer.name,
+//                 Phone: orderData.customer.phone,
+//                 Extension: '',
+//                 Email: orderData.customer.email,
+//                 SendEmail: ''
+//             }
+//         }
+//     };
+
+//     // Send a POST request to the /get-label/<order_id> endpoint
+//     fetch(`/get-label`, {
+//         method: 'POST', // Use POST method
+//         headers: {
+//             'Content-Type': 'application/json' // Specify JSON content type
+//         },
+//         body: JSON.stringify(payload) // Convert payload to JSON string
+//     })
+//         .then(response => response.json()) // Parse the JSON response
+//         .then(data => {
+//             // Clear existing content in the modal
+//             const modalContent = document.querySelector('.modal-content');
+//             modalContent.innerHTML = '';
+
+//             // Create a new container for the JSON data
+//             const jsonContainer = document.createElement('pre');
+//             jsonContainer.style.whiteSpace = 'pre-wrap'; // Ensure JSON is readable
+//             jsonContainer.textContent = JSON.stringify(data, null, 2); // Pretty-print JSON
+
+//             // Add a close button
+//             const closeButton = document.createElement('span');
+//             closeButton.className = 'close';
+//             closeButton.innerHTML = '&times;';
+//             closeButton.onclick = function () {
+//                 document.getElementById('labelModal').style.display = 'none';
+//             };
+
+//             // Append the JSON data and close button to the modal
+//             modalContent.appendChild(closeButton);
+//             modalContent.appendChild(jsonContainer);
+
+//             // Show the modal
+//             document.getElementById('labelModal').style.display = 'block';
+//         })
+//         .catch(error => {
+//             console.error('Error fetching label data:', error);
+//             alert('Failed to load shipping label data');
+//         });
+// }
+
+function showLabel(optionIndex) {
     let originZipcode = document.getElementById("originZipcode").value || "91710";
     // Read the JSON from the hidden script tag
     const orderData = JSON.parse(document.getElementById('order-data').textContent);
-     console.log('orderData:', orderData);
+
+    // Get the selected shipping option data
+    const selectedOption = window.shippingOptionsData[optionIndex];
 
     // Define the payload
     const payload = {
@@ -118,22 +212,13 @@ function showLabel() {
                 Zipcode: originZipcode
             },
             Consignee: {
-                Zipcode: orderData.zip
+                Zipcode: orderData.detailAddress.zip
             },
-            LineItems: [
-                {
-                    Pieces: '1',
-                    Weight: '1',
-                    Description: 'ride on car toys',
-                    Length: '1',
-                    Width: '1',
-                    Height: '1'
-                }
-            ],
+            LineItems: getLineItems(orderData),
             TariffHeaderID: ''
         },
         Shipment: {
-            Option: 0,
+            Option: optionIndex, // Use the selected option index
             PackageType: 'PALLET',
             PayType: '0',
             IsScreeningConsent: 'false',
@@ -166,28 +251,23 @@ function showLabel() {
         }
     };
 
-    console.log(payload)
-
-    // Send a POST request to the /get-label/<order_id> endpoint
+    // Send a POST request to the /get-label endpoint
     fetch(`/get-label`, {
-        method: 'POST', // Use POST method
+        method: 'POST',
         headers: {
-            'Content-Type': 'application/json' // Specify JSON content type
+            'Content-Type': 'application/json'
         },
-        body: JSON.stringify(payload) // Convert payload to JSON string
+        body: JSON.stringify(payload)
     })
-        .then(response => response.json()) // Parse the JSON response
+        .then(response => response.json())
         .then(data => {
-            // Clear existing content in the modal
             const modalContent = document.querySelector('.modal-content');
             modalContent.innerHTML = '';
 
-            // Create a new container for the JSON data
             const jsonContainer = document.createElement('pre');
-            jsonContainer.style.whiteSpace = 'pre-wrap'; // Ensure JSON is readable
-            jsonContainer.textContent = JSON.stringify(data, null, 2); // Pretty-print JSON
+            jsonContainer.style.whiteSpace = 'pre-wrap';
+            jsonContainer.textContent = JSON.stringify(data, null, 2);
 
-            // Add a close button
             const closeButton = document.createElement('span');
             closeButton.className = 'close';
             closeButton.innerHTML = '&times;';
@@ -195,11 +275,8 @@ function showLabel() {
                 document.getElementById('labelModal').style.display = 'none';
             };
 
-            // Append the JSON data and close button to the modal
             modalContent.appendChild(closeButton);
             modalContent.appendChild(jsonContainer);
-
-            // Show the modal
             document.getElementById('labelModal').style.display = 'block';
         })
         .catch(error => {
@@ -255,29 +332,62 @@ function printLabel() {
     printWindow.document.close();
 }
 
+// function fetchShippingOptions() {
+//     let zipcode = document.getElementById("originZipcode").value || "91710";
+//     let ordername = document.getElementById("orderName").textContent;
+
+//     fetch(`/get-shipping-options?zipcode=${zipcode}&ordername=${ordername}`)
+//         .then(response => response.json())
+//         .then(data => {
+//             let shippingSection = document.getElementById("shippingOptionsSection");
+//             let shippingTable = document.getElementById("shippingOptionsTable");
+//             shippingTable.innerHTML = ""; // Clear existing data
+
+//             if (data.length > 0) {
+//                 shippingSection.style.display = "block"; // Show the section
+
+//                 data.forEach(service => {
+//                     let row = `<tr>
+//                         <td>${service.DisplayService}</td>
+//                         <td>$${service.TotalQuote.toFixed(2)}</td>
+//                         <td>${service.DeliveryDate.split('T')[0]}</td>
+//                         <td><button onclick="showLabel()" class="shipnow-button">Ship Now</button></td>
+//                     </tr>`;
+//                     shippingTable.innerHTML += row;
+//                 });
+//             } else {
+//                 shippingSection.style.display = "none"; // Hide if no results
+//             }
+//         })
+//         .catch(error => {
+//             console.error("Error fetching shipping options:", error);
+//             document.getElementById("shippingOptionsSection").style.display = "none";
+//         });
+// }
+
 function fetchShippingOptions() {
     let zipcode = document.getElementById("originZipcode").value || "91710";
     let ordername = document.getElementById("orderName").textContent;
-
     fetch(`/get-shipping-options?zipcode=${zipcode}&ordername=${ordername}`)
         .then(response => response.json())
         .then(data => {
+            console.log(data);
             let shippingSection = document.getElementById("shippingOptionsSection");
             let shippingTable = document.getElementById("shippingOptionsTable");
             shippingTable.innerHTML = ""; // Clear existing data
-
             if (data.length > 0) {
                 shippingSection.style.display = "block"; // Show the section
-
-                data.forEach(service => {
+                data.forEach((service, index) => {
                     let row = `<tr>
                         <td>${service.DisplayService}</td>
                         <td>$${service.TotalQuote.toFixed(2)}</td>
                         <td>${service.DeliveryDate.split('T')[0]}</td>
-                        <td><button onclick="showLabel()" class="shipnow-button">Ship Now</button></td>
+                        <td><button onclick="showLabel(${index})" class="shipnow-button">Ship Now</button></td>
                     </tr>`;
                     shippingTable.innerHTML += row;
                 });
+                // Store the shipping options data in a global variable for later access
+                window.shippingOptionsData = data;
             } else {
                 shippingSection.style.display = "none"; // Hide if no results
             }
@@ -312,9 +422,9 @@ function getLineItems(orderData) {
             Pieces: quantity.toString(),
             Weight: weight.toString(),
             Description: name,
-            Length: "1",
-            Width: "1",
-            Height: "1"
+            Length: "61",
+            Width: "40",
+            Height: "24"
         });
     });
 

@@ -210,17 +210,14 @@ class MaerskApi():
 			print("Error:", e)
 
 	def get_rating_rest(self, ratingRootObject, data):
-		ratingRootObject['Rating']['LocationID'] = data['LocationID']
-		ratingRootObject['Rating']['Shipper']['Zipcode'] = data['Shipper']['Zipcode']
-		ratingRootObject['Rating']['Consignee']['Zipcode'] = data['Consignee']['Zipcode']
-		ratingRootObject['Rating']['LineItems'] = data['LineItems']
-		ratingRootObject['Rating']['TariffHeaderID'] = data['TariffHeaderID']
+		rating_data = data['Rating']
+		ratingRootObject['Rating']['LocationID'] = rating_data['LocationID']
+		ratingRootObject['Rating']['Shipper']['Zipcode'] = rating_data['Shipper']['Zipcode']
+		ratingRootObject['Rating']['Consignee']['Zipcode'] = rating_data['Consignee']['Zipcode']
+		ratingRootObject['Rating']['LineItems'] = rating_data['LineItems']
+		ratingRootObject['Rating']['TariffHeaderID'] = rating_data['TariffHeaderID']
 
 		endpoint = 'https://www.pilotssl.com/pilotapi/v1/Ratings'
-
-		# payload = json.dumps(ratingRootObject)
-		# encoded_payload = urlencode(payload)
-		# content_length = str(len(encoded_payload))
 		payload = ratingRootObject
 
 		headers = {
@@ -662,20 +659,13 @@ class MaerskApi():
 		return result
 
 	def save_shipment_rest(self, rootShipmentObject, data, input_data):
-		# Rating info
-		print('rootShipmentObject')
-		print(rootShipmentObject)
-		print('')
-		print('data')
-		print(data)
-		print('')
-
-		option = input_data['Option']
-		PackageType = input_data['PackageType']
-		Shipper = input_data['Shipper']
-		Consignee = input_data['Consignee']
-		PayType = input_data['PayType']
-		IsScreeningConsent = input_data['IsScreeningConsent']
+		print(f'input_data: {input_data}')
+		option = input_data['Shipment']['Option']
+		PackageType = input_data['Shipment']['PackageType']
+		Shipper = input_data['Shipment']['Shipper']
+		Consignee = input_data['Shipment']['Consignee']
+		PayType = input_data['Shipment']['PayType']
+		IsScreeningConsent = input_data['Shipment']['IsScreeningConsent']
 
 		rating = data['dsQuote']['Rating'][0]
 		rootShipmentObject['Shipment']['QuoteId'] = str(rating['QuoteID'])
@@ -806,13 +796,14 @@ class MaerskApi():
 		# encoded_payload = urlencode(payload)
 		# content_length = str(len(encoded_payload))
 		payload = rootShipmentObject
-		print(f'payload: {payload}')
 
 		headers = {
 			'Content-Type': 'application/json',
 			'Accept': 'text/plain',
 			'api-key': os.getenv('P_MAERSK_API_KEY')
 		}
+
+		print(f'payload: {payload}')
 
 		try:
 			with requests.Session() as client:
